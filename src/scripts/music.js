@@ -7,27 +7,24 @@
 // Layers:
 //   1. ATMOSPHERE  deep rumble + low hum. Always there while the sound is on.
 //   2. SWELL       a dark, slowly breathing low texture (extra layer).
-//   3. MOUSE NOISE very quiet noise through a band-pass filter;
+//   3. MOUSE NOISE quiet noise through a band-pass filter;
 //                  the filter frequency follows the mouse left → right.
-//   4. SYNTH       one monophonic instrument voice, played only by the mouse:
-//                  mouse height picks the note, moving/clicking plays it.
-//   TONE sets how loud the extra layers (2–4) are; it never changes pitches or filters.
+//   4. SYNTH       one wide synth sound on a single note. It plays while the mouse
+//                  moves or is pressed and stops when that stops. The faster the
+//                  movement and the longer the press, the more aggressive it gets.
+//   TONE sets the levels of the layers (never pitches or filters).
 //   SPACE sets reverb + echo.
 //
-//   layers → drive (saturation) → dry + reverb + delay → compressor
-//          → master (volume, movement, hold) → fade → limiter → speakers
+//   layers → dry + reverb + delay → compressor → master (volume) → fade → limiter → speakers
 //
-// Holding the mouse button / a finger makes everything more aggressive:
-// more saturation, harder compression, a bit louder.
 // The numbers in the "SOUND DESIGN" section below are safe to play with.
 // ─────────────────────────────────────────────────────────────
 import { CONTROLS, clampControl } from './music-controls.js';
 
 const STORAGE_KEY = 'music-controls';
 const MAX_GAIN = 3; // master gain at Volume 100% (the limiter keeps peaks in check)
-
-// Notes the synth can play, low → high (D minor pentatonic, D2 … D4, as MIDI numbers).
-const SCALE = [38, 41, 43, 45, 48, 50, 53, 55, 57, 60, 62];
+const SYNTH_NOTE = 73.42; // the synth's single note in Hz (D2)
+const CLICK_MS = 300; // a single click/tap sounds at least this long
 
 // ── Control values (remembered for this visit) ──
 /** @type {{ tone: number, space: number, volume: number }} */
@@ -48,65 +45,60 @@ try {
 // ── Mouse / touch input (passive listeners: never blocks anything) ──
 const input = {
   x: 0.5, // 0 = left, 1 = right
-  y: 0.5, // 0 = bottom, 1 = top
   rawSpeed: 0, // latest movement speed, 0…1
   speed: 0, // smoothed movement speed, 0…1
   holding: false, // mouse button / finger held down
-  intensity: 0, // smoothed hold amount, 0…1
+  pressTime: 0, // seconds the current press has lasted
+  clickUntil: 0, // a click keeps the synth on at least until this time (ms)
   lastX: 0,
   lastY: 0,
   lastT: 0,
 };
 
+/** @param {number} clientX @param {number} clientY */
 function move(clientX, clientY) {
   const now = performance.now();
   if (input.lastT && now - input.lastT < 200) {
     const dt = Math.max(8, now - input.lastT) / 1000;
     const dist = Math.hypot(clientX - input.lastX, clientY - input.lastY);
     const screensPerSecond = dist / Math.hypot(window.innerWidth, window.innerHeight) / dt;
-    input.rawSpeed = Math.max(input.rawSpeed, Math.min(1, screensPerSecond / 1.5));
+    input.rawSpeed = Math.max(input.rawSpeed, Math.min(1, screensPerSecond / 2));
   }
   input.lastX = clientX;
   input.lastY = clientY;
   input.lastT = now;
   input.x = clientX / window.innerWidth;
-  input.y = 1 - clientY / window.innerHeight;
 }
 
-function press() {
+const press = () => {
   input.holding = true;
-  if (running) playNote(noteAt(input.y), 1); // a click always plays the note under the mouse
-}
-function release() {
-  input.holding = false;
-  if (running) releaseNote();
-}
+  input.clickUntil = performance.now() + CLICK_MS;
+};
+const release = () => (input.holding = false);
 
 window.addEventListener('pointermove', (e) => move(e.clientX, e.clientY), { passive: true });
 window.addEventListener(
   'pointerdown',
   (e) => {
     move(e.clientX, e.clientY);
-    if (e.pointerType !== 'touch') press(); // touch holds are handled below
+    if (e.pointerType !== 'touch') press(); // touch is handled below
   },
   { passive: true },
 );
 window.addEventListener('pointerup', (e) => e.pointerType !== 'touch' && release(), { passive: true });
-window.addEventListener('pointercancel', () => (input.holding = false), { passive: true });
-window.addEventListener('blur', () => (input.holding = false));
+window.addEventListener('pointercancel', release, { passive: true });
+window.addEventListener('blur', release);
 
-// Touch: moving the finger (scrolling) counts as movement; holding it still counts as a hold.
+// Touch: a tap sounds like a click, a still finger is a press, a moving finger (scrolling) is movement.
 /** @type {{ x: number, y: number } | null} */
 let touchStart = null;
-let holdTimer = 0;
 window.addEventListener(
   'touchstart',
   (e) => {
     const t = e.touches[0];
     touchStart = { x: t.clientX, y: t.clientY };
     move(t.clientX, t.clientY);
-    clearTimeout(holdTimer);
-    holdTimer = window.setTimeout(press, 250);
+    press();
   },
   { passive: true },
 );
@@ -115,15 +107,11 @@ window.addEventListener(
   (e) => {
     const t = e.touches[0];
     move(t.clientX, t.clientY);
-    if (touchStart && Math.hypot(t.clientX - touchStart.x, t.clientY - touchStart.y) > 12) {
-      clearTimeout(holdTimer);
-      input.holding = false;
-    }
+    if (touchStart && Math.hypot(t.clientX - touchStart.x, t.clientY - touchStart.y) > 12) release();
   },
   { passive: true },
 );
 const touchEnd = () => {
-  clearTimeout(holdTimer);
   touchStart = null;
   release();
 };
@@ -156,11 +144,11 @@ export const onStatusChange = (fn) => {
   fn({ playing: running });
 };
 
-/** Smoothly move an AudioParam to a value. @param {AudioParam} param @param {number} value */
+// Smoothly move an AudioParam towards a value. (No cancelling: every new glide starts
+// from wherever the value currently is, so nothing ever jumps or clicks.)
+/** @param {AudioParam} param @param {number} value */
 function glide(param, value, time = 0.05) {
-  const now = ctx.currentTime;
-  param.cancelScheduledValues(now);
-  param.setTargetAtTime(value, now, time);
+  param.setTargetAtTime(value, ctx.currentTime, time);
 }
 
 /** @param {'white' | 'brown'} type */
@@ -208,7 +196,6 @@ function osc(type, frequency) {
 /** @param {BiquadFilterType} type @param {number} frequency */
 const filter = (type, frequency, Q = 0.7) => new BiquadFilterNode(ctx, { type, frequency, Q });
 const gain = (value = 1) => new GainNode(ctx, { gain: value });
-const midiToHz = (/** @type {number} */ m) => 440 * 2 ** ((m - 69) / 12);
 
 function buildGraph() {
   ctx = new AudioContext({ latencyHint: 'playback' });
@@ -224,7 +211,7 @@ function buildGraph() {
   n.atmosphere.connect(n.bus);
 
   n.rumbleLP = filter('lowpass', 90);
-  n.rumbleGain = gain(0.5);
+  n.rumbleGain = gain(0.5); // Tone
   loopSource(brown).connect(n.rumbleLP).connect(n.rumbleGain).connect(n.atmosphere);
 
   // hum: E1 with a slowly beating twin, plus soft E2/E3 partials so phone and laptop speakers can hear it
@@ -237,7 +224,7 @@ function buildGraph() {
   n.humLFO.connect(n.humDepth).connect(n.humGain.gain);
 
   // 2. SWELL: dark breathing texture (extra layer, level set by Tone) ─
-  n.swellBP = filter('bandpass', 110, 2.5);
+  n.swellBP = filter('bandpass', 170, 1.5);
   n.swellAmount = gain(0); // Tone
   n.swellBreath = gain(0.5);
   loopSource(brown).connect(n.swellBP).connect(n.swellBreath).connect(n.swellAmount).connect(n.atmosphere);
@@ -245,62 +232,77 @@ function buildGraph() {
   n.swellDepth = gain(0.5);
   n.swellLFO.connect(n.swellDepth).connect(n.swellBreath.gain);
 
-  // 3. MOUSE NOISE (parallel, very quiet) ─────────
+  // 3. MOUSE NOISE (parallel) ──────────────────────
   n.mouseBP = filter('bandpass', 400, 4);
   n.mouseGain = gain(0);
   loopSource(white).connect(n.mouseBP).connect(n.mouseGain).connect(n.bus);
 
-  // 4. SYNTH: one voice, played by the mouse ──────
-  // two slightly detuned saws + a sine an octave below, a soft vibrato, a filter that opens on each note
-  n.synthOscs = [osc('sawtooth', 110), osc('sawtooth', 110), osc('sine', 55)];
-  n.synthOscs[1].detune.value = 9;
-  n.vibrato = osc('sine', 5.2);
-  n.vibratoDepth = gain(6); // cents
+  // 4. SYNTH: one wide note ────────────────────────
+  // detuned saws spread left/right + an octave layer → drive → filter → envelope (+ a clean sub)
+  n.synthMix = gain(0.35);
+  n.synthHigh = gain(0); // octave layer, grows with aggression
+  /** @type {{ osc: OscillatorNode, side: number }[]} */
+  n.saws = [];
+  for (const [multiplier, target] of [
+    [1, n.synthMix],
+    [2, n.synthHigh],
+  ]) {
+    for (const side of [-1, 1]) {
+      const o = osc('sawtooth', SYNTH_NOTE * multiplier);
+      const pan = new StereoPannerNode(ctx, { pan: side * 0.75 });
+      o.connect(pan).connect(target);
+      n.saws.push({ osc: o, side });
+    }
+  }
+  n.synthHigh.connect(n.synthMix);
+  n.vibrato = osc('sine', 4.8);
+  n.vibratoDepth = gain(4); // cents
   n.vibrato.connect(n.vibratoDepth);
-  n.synthOscs.forEach((/** @type {OscillatorNode} */ o) => n.vibratoDepth.connect(o.detune));
-  n.synthMix = gain(0.5);
-  n.synthOscs.forEach((/** @type {OscillatorNode} */ o) => o.connect(n.synthMix));
-  n.synthLP = filter('lowpass', 400, 5);
-  n.synthEnv = gain(0); // note envelope
-  n.synthLevel = gain(0); // Tone
-  n.synthMix.connect(n.synthLP).connect(n.synthEnv).connect(n.synthLevel).connect(n.bus);
+  n.saws.forEach((/** @type {{ osc: OscillatorNode }} */ s) => n.vibratoDepth.connect(s.osc.detune));
 
-  // DRIVE (saturation, more when holding) ─────────
-  n.drive = gain(1);
+  n.synthDrive = gain(1);
   const curve = new Float32Array(2048);
-  for (let i = 0; i < curve.length; i++) curve[i] = Math.tanh(((i / (curve.length - 1)) * 2 - 1) * 1.3);
-  n.shaper = new WaveShaperNode(ctx, { curve, oversample: '2x' });
-  n.postDrive = gain(1);
-  n.bus.connect(n.drive).connect(n.shaper).connect(n.postDrive);
+  for (let i = 0; i < curve.length; i++) curve[i] = Math.tanh(((i / (curve.length - 1)) * 2 - 1) * 1.5);
+  n.synthShaper = new WaveShaperNode(ctx, { curve, oversample: '4x' });
+  n.synthPost = gain(1);
+  n.synthLP = filter('lowpass', 300, 2);
+  n.synthEnv = gain(0); // on while moving/pressing
+  n.synthLevel = gain(0); // Tone
+  n.synthMix.connect(n.synthDrive).connect(n.synthShaper).connect(n.synthPost).connect(n.synthLP);
+  n.synthLP.connect(n.synthEnv).connect(n.synthLevel).connect(n.bus);
+  // the sub stays clean (distorting a very low tone turns it into a clicking buzz)
+  n.sub = osc('sine', SYNTH_NOTE / 2);
+  n.subGain = gain(0.22);
+  n.sub.connect(n.subGain).connect(n.synthEnv);
 
   // SPACE: dry + two reverbs (short/long) + feedback delay ─
   n.fx = gain(1); // sum of dry + effects
   n.dry = gain(1);
-  n.postDrive.connect(n.dry).connect(n.fx);
+  n.bus.connect(n.dry).connect(n.fx);
 
   n.revShort = new ConvolverNode(ctx, { buffer: reverbBuffer(1.4) });
   n.revLong = new ConvolverNode(ctx, { buffer: reverbBuffer(7) });
   n.revShortGain = gain(0);
   n.revLongGain = gain(0);
-  n.postDrive.connect(n.revShort).connect(n.revShortGain).connect(n.fx);
-  n.postDrive.connect(n.revLong).connect(n.revLongGain).connect(n.fx);
+  n.bus.connect(n.revShort).connect(n.revShortGain).connect(n.fx);
+  n.bus.connect(n.revLong).connect(n.revLongGain).connect(n.fx);
 
   n.delaySend = gain(0);
   n.delay = new DelayNode(ctx, { maxDelayTime: 2, delayTime: 0.4 });
   n.delayLP = filter('lowpass', 2400);
   n.delayHP = filter('highpass', 150);
   n.feedback = gain(0.3);
-  n.postDrive.connect(n.delaySend).connect(n.delay);
+  n.bus.connect(n.delaySend).connect(n.delay);
   n.delay.connect(n.delayLP).connect(n.delayHP).connect(n.feedback).connect(n.delay);
   n.delayOut = gain(1);
   n.delay.connect(n.delayOut).connect(n.fx);
   n.delayOut.connect(n.revLong); // echoes smear into the long reverb
 
-  // DYNAMICS + OUTPUT ─────────────────────────────
-  n.comp = new DynamicsCompressorNode(ctx, { threshold: -14, knee: 6, ratio: 2, attack: 0.01, release: 0.3 });
+  // DYNAMICS + OUTPUT (fixed settings: nothing here moves while playing) ─
+  n.comp = new DynamicsCompressorNode(ctx, { threshold: -12, knee: 8, ratio: 2, attack: 0.01, release: 0.3 });
   n.master = gain(0);
   n.fade = gain(0);
-  n.limiter = new DynamicsCompressorNode(ctx, { threshold: -8, knee: 0, ratio: 20, attack: 0.002, release: 0.2 });
+  n.limiter = new DynamicsCompressorNode(ctx, { threshold: -8, knee: 0, ratio: 20, attack: 0.003, release: 0.25 });
   n.trim = gain(0.6); // the browser compressor adds make-up gain; trim it back
   n.fx.connect(n.comp).connect(n.master).connect(n.fade).connect(n.limiter).connect(n.trim).connect(ctx.destination);
 
@@ -312,16 +314,20 @@ function buildGraph() {
 //  SOUND DESIGN — how the knobs and the mouse shape the sound
 // ═════════════════════════════════════════════════════════════
 
-// TONE: only levels. 0 = just the deep atmosphere … 1 = swell, mouse noise and synth up front.
-// (Mouse noise and synth levels are multiplied by this in applyInput / playNote.)
+// TONE: only levels. 0 = a sparse, quiet hum … 1 = heavy rumble, big swell, mouse noise and synth up front.
+// (Mouse noise and synth levels are also multiplied by this in applyInput.)
 const toneMix = () => ({
-  swell: 2.5 * state.tone,
-  mouse: 0.2 + 0.8 * state.tone,
-  synth: 0.25 + 0.75 * state.tone,
+  hum: 0.1 + 0.08 * state.tone,
+  rumble: 0.1 + 0.9 * state.tone,
+  swell: 3.5 * state.tone,
+  mouse: 0.25 + 0.75 * state.tone,
+  synth: 0.35 + 0.65 * state.tone,
 });
 
 function applyTone(time = 0.3) {
   const mix = toneMix();
+  glide(n.humGain.gain, mix.hum, time);
+  glide(n.rumbleGain.gain, mix.rumble, time);
   glide(n.swellAmount.gain, mix.swell, time);
   glide(n.synthLevel.gain, mix.synth, time);
 }
@@ -338,76 +344,38 @@ function applySpace(time = 0.3) {
   glide(n.delayLP.frequency, 3500 - 1800 * s, time);
 }
 
-// SYNTH: which note is under the mouse (low at the bottom of the screen, high at the top)
-const noteAt = (/** @type {number} */ y) => SCALE[Math.min(SCALE.length - 1, Math.max(0, Math.floor(y * SCALE.length)))];
-let currentNote = 0;
-let lastNoteTime = 0;
-
-// Play one note on the single synth voice (a new note replaces the old one, with a short glide).
-function playNote(/** @type {number} */ note, /** @type {number} */ velocity) {
-  const now = ctx.currentTime;
-  const f = midiToHz(note);
-  glide(n.synthOscs[0].frequency, f, 0.025);
-  glide(n.synthOscs[1].frequency, f, 0.025);
-  glide(n.synthOscs[2].frequency, f / 2, 0.025);
-
-  const peak = 0.22 * velocity;
-  const env = n.synthEnv.gain;
-  env.cancelScheduledValues(now);
-  env.setValueAtTime(env.value, now);
-  env.linearRampToValueAtTime(peak, now + 0.015);
-  // held: sustain; not held: a soft pluck that fades by itself
-  env.setTargetAtTime(input.holding ? peak * 0.6 : 0, now + 0.015, input.holding ? 0.4 : 0.35);
-
-  const cutoff = n.synthLP.frequency;
-  cutoff.cancelScheduledValues(now);
-  cutoff.setValueAtTime(cutoff.value, now);
-  cutoff.linearRampToValueAtTime(500 + 2500 * velocity, now + 0.02);
-  cutoff.setTargetAtTime(input.holding ? 1400 : 450, now + 0.02, 0.3);
-
-  currentNote = note;
-  lastNoteTime = performance.now();
-}
-
-function releaseNote() {
-  glide(n.synthEnv.gain, 0, 0.35);
-  glide(n.synthLP.frequency, 400, 0.4);
-}
-
 /** Smoothing that doesn't depend on the frame rate. @param {number} current @param {number} target @param {number} tau @param {number} dt */
 const ease = (current, target, tau, dt) => current + (target - current) * (1 - Math.exp(-dt / tau));
 
-// Runs ~30 times a second while the sound is on: mouse position, movement speed and holding.
+// Runs ~30 times a second while the sound is on.
 function applyInput(/** @type {number} */ dt) {
-  // movement speed: rises fast, falls slowly
-  input.speed = ease(input.speed, input.rawSpeed, input.rawSpeed > input.speed ? 0.05 : 0.35, dt);
+  // movement speed: rises fast, falls quickly once the mouse stops
+  input.speed = ease(input.speed, input.rawSpeed, input.rawSpeed > input.speed ? 0.05 : 0.15, dt);
   input.rawSpeed *= Math.exp(-dt / 0.06);
-  // holding: builds up over ~1 s, relaxes over ~0.5 s
-  input.intensity = ease(input.intensity, input.holding ? 1 : 0, input.holding ? 0.4 : 0.25, dt);
-  const { x, y, speed, intensity } = input;
+  input.pressTime = input.holding ? input.pressTime + dt : 0;
+  const { x, speed, pressTime } = input;
   const mix = toneMix();
 
-  // MOUSE NOISE: band-pass follows the mouse left → right (100 Hz … 2.5 kHz).
-  // Higher bands hold more noise energy, so the level drops steeply to the right
-  // (it ends up ~12 dB quieter at the right edge than at the left).
+  // MOUSE NOISE: band-pass follows the mouse left → right (100 Hz … 2.5 kHz),
+  // a little quieter towards the right (higher bands hold more noise energy).
   glide(n.mouseBP.frequency, 100 * 2 ** (x * 4.6), 0.08);
-  const highCut = 2 ** (-x * 4.3);
-  glide(n.mouseGain.gain, (0.07 + 0.1 * speed + 0.06 * intensity) * highCut * mix.mouse, 0.08);
+  const highCut = 2 ** (-x * 3.2);
+  glide(n.mouseGain.gain, (0.2 + 0.15 * speed) * highCut * mix.mouse, 0.08);
 
-  // SYNTH: moving onto a new note plays it (at most ~7 notes a second; faster = stronger)
-  const note = noteAt(y);
-  if (speed > 0.06 && note !== currentNote && performance.now() - lastNoteTime > 140) {
-    playNote(note, 0.45 + 0.55 * Math.min(1, speed * 2));
-  }
+  // SYNTH: on while moving or pressing (a click lasts at least CLICK_MS), off when that stops.
+  const active = input.holding || speed > 0.04 || performance.now() < input.clickUntil;
+  // aggression grows with movement speed and with how long the press lasts (full after ~3 s)
+  const a = Math.min(1, speed * 1.2 + pressTime / 3);
+  glide(n.synthEnv.gain, active ? 0.12 + 0.16 * a : 0, active ? 0.03 : 0.15);
+  glide(n.synthLP.frequency, 200 + 6000 * a ** 1.4, 0.06);
+  glide(n.synthLP.Q, 2 + 5 * a, 0.06);
+  glide(n.synthDrive.gain, 1 + 14 * a, 0.06); // saturation (synth only)
+  glide(n.synthPost.gain, 1 / (1 + 2.2 * a), 0.06); // only partly compensated → louder when aggressive
+  glide(n.synthHigh.gain, 0.15 + 0.7 * a, 0.06);
+  for (const s of n.saws) glide(s.osc.detune, s.side * (6 + 24 * a), 0.06); // wider when aggressive
 
-  // AGGRESSION while holding: saturation + harder compression (+ a bit louder, below)
-  glide(n.drive.gain, 1 + 12 * intensity, 0.08);
-  glide(n.postDrive.gain, 1 / (1 + 4 * intensity), 0.08);
-  glide(n.comp.threshold, -14 - 18 * intensity, 0.08);
-  glide(n.comp.ratio, 2 + 10 * intensity, 0.08);
-
-  // MASTER: the Volume fader, a little louder when moving fast or holding
-  const level = state.volume ** 2 * MAX_GAIN * (1 + 0.35 * speed) * (1 + 1.1 * intensity);
+  // MASTER: the Volume fader, a touch louder while moving fast or pressing
+  const level = state.volume ** 2 * MAX_GAIN * (1 + 0.2 * speed + 0.25 * Math.min(1, pressTime / 3));
   glide(n.master.gain, level, 0.06);
 }
 // ═════════════════════════════════════════════════════════════

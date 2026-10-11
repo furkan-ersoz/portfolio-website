@@ -149,7 +149,7 @@ A small panel in the bottom-right corner controls an atmospheric background soun
 
 | File | What it is |
 | --- | --- |
-| `src/scripts/music.js` | The sound engine. The **SOUND DESIGN** section holds all the numbers that shape the sound; `SCALE` sets the synth's notes. |
+| `src/scripts/music.js` | The sound engine. The **SOUND DESIGN** section holds all the numbers that shape the sound; `SYNTH_NOTE` sets the synth's note. |
 | `src/scripts/music-controls.js` | Ranges and default values of the knobs and fader. |
 | `src/components/music/` | The panel, knobs and fader. |
 
@@ -157,15 +157,15 @@ A small panel in the bottom-right corner controls an atmospheric background soun
 
 1. **Atmosphere**: a deep rumble and a low hum (around E1). Always there while the sound is on.
 2. **Swell**: a dark, slowly breathing low texture.
-3. **Mouse noise**: a very quiet noise through a band-pass filter whose frequency follows the mouse left → right; it gets quieter the higher it goes.
-4. **Synth**: one instrument voice (two detuned saws + a sub, soft vibrato). Mouse height picks the note (D minor pentatonic, low at the bottom of the screen, high at the top); moving onto a new note or clicking plays it. Only one note sounds at a time, and it's silent without mouse input.
+3. **Mouse noise**: a quiet noise through a band-pass filter whose frequency follows the mouse left → right; a little quieter towards the high end.
+4. **Synth**: one wide synth sound on a single note (D2): detuned saws spread left/right, an octave layer and a clean sub. It starts when the mouse starts moving or is pressed and stops when that stops; a single click plays a short sound. The faster the movement and the longer the press, the more aggressive it gets: brighter, more distorted, wider and a bit louder.
 
 **Controls**
 
-- **Tone**: only levels, never pitches or filters. At 0% you hear just the deep atmosphere; turning it up brings in the swell, the mouse noise and the synth.
+- **Tone**: only levels, never pitches or filters. At 0% you hear a sparse, quiet hum; turning it up brings in the heavy rumble, the swell, the mouse noise and the synth.
 - **Space**: from close and dry (0%) to a huge reverb with long, dense echoes (100%).
 - **Volume** (fader): at the bottom the sound is off.
-- **Moving the mouse** makes it a little louder; **holding the mouse button** (or a finger, on phones) makes it more aggressive: saturated, compressed and slightly louder, and the synth note sustains.
+- **Moving the mouse / pressing** (or a finger, on phones) plays the synth; speed and press length make it more aggressive.
 
 Knobs: drag up/down (hold Shift for fine steps), scroll, double-click to reset, or use the arrow keys. On phones the panel folds into a round ♪ button. A limiter keeps it from ever getting loud. When the fader is at Off, or the tab is hidden, no audio processing runs.
 
