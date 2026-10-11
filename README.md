@@ -14,7 +14,7 @@ Live at **https://furkanersoz.com**.
 | The About text (English + Turkish)    | `src/content/about/about.md`                      |
 | My photo on the About page            | `src/content/about/photo.png`                     |
 | Email, name, social links             | `src/site.config.ts`                              |
-| The moving Hydra background           | `src/scripts/background.js` → "EDIT YOUR HYDRA SKETCH HERE" |
+| The moving background (sparkles/Hydra)| `src/scripts/background.js` → "SPARKLE SETTINGS" / "EDIT YOUR HYDRA SKETCH HERE" |
 | Colours, fonts, column width          | `src/styles/global.css` (top of the file)         |
 | Audio / video files                   | `public/audio/…`, `public/video/…`                |
 
@@ -130,9 +130,14 @@ Keep the two-space indent under `text: |` and leave an empty line between paragr
 
 Open `src/site.config.ts` and replace each `'TODO'` with the full URL, e.g. `'https://github.com/furkan-ersoz'`. Links still set to `TODO` are shown greyed out.
 
-## Changing the Hydra background
+## Changing the background
 
-Open `src/scripts/background.js` and paste your sketch from the [Hydra editor](https://hydra.ojack.xyz) inside the `sketch()` function, in the block marked **EDIT YOUR HYDRA SKETCH HERE**. Same syntax as the editor (`osc()`, `noise()`, `mouse.x`, `time`…). Microphone input (`a.fft`) is turned off, so don't use `a.` in the background sketch.
+The background is red sparkles on black: moving the mouse pushes them away, and holding the mouse button (or a finger on phones) pulls them into a swirling cloud. Everything is in `src/scripts/background.js`:
+
+- **SPARKLE SETTINGS**: number of sparkles, colours, size, speed, how strongly the mouse pushes and pulls, trail length. Change a number, save, and the page updates.
+- **EDIT YOUR HYDRA SKETCH HERE**: the Hydra code that draws the final image. The sparkles arrive as source `s0`, so `src(s0).out()` shows them as they are; you can add Hydra effects on top, e.g. `src(s0).modulate(noise(2), 0.01).out()`. To use a completely different Hydra sketch from the [Hydra editor](https://hydra.ojack.xyz), paste it there and set `enabled: false` in the sparkle settings. Microphone input (`a.fft`) is turned off.
+
+(The sparkle simulation itself is in `src/scripts/sparkles.js`; you shouldn't need to touch it.)
 
 The background pauses when the tab is hidden, shows a still frame for visitors who prefer reduced motion, and renders at lower resolution on phones.
 

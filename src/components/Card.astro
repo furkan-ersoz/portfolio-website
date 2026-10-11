@@ -39,7 +39,6 @@ const { item } = Astro.props;
     overflow: hidden;
     border: 1px solid var(--border-strong);
     background: #111;
-    transition: border-color 0.35s;
   }
   .card:hover .frame,
   .card:focus-visible .frame {
@@ -52,9 +51,8 @@ const { item } = Astro.props;
     object-fit: cover;
     /* Black & white by default … */
     filter: grayscale(1);
-    transition: filter 0.35s ease;
   }
-  /* … colour on hover / keyboard focus */
+  /* … instantly in colour on hover / keyboard focus */
   .card:hover .cover,
   .card:focus-visible .cover {
     filter: grayscale(0);

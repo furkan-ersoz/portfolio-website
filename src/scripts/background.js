@@ -1,22 +1,41 @@
 // ─────────────────────────────────────────────────────────────
 // HYDRA BACKGROUND
 // Draws the moving visual behind every page.
-// You only need to edit the section marked "EDIT YOUR HYDRA SKETCH HERE".
+// You only need to edit the two marked sections below:
+//   "SPARKLE SETTINGS" and "EDIT YOUR HYDRA SKETCH HERE".
 // ─────────────────────────────────────────────────────────────
 import './global-shim.js'; // must come before hydra-synth
 import Hydra from 'hydra-synth';
+import { createSparkles } from './sparkles.js';
+
+// ═════════════════════════════════════════════════════════════
+//  SPARKLE SETTINGS
+//  Red sparkles on black. Moving the mouse pushes them away;
+//  holding the mouse button (or a finger on phones) pulls them in.
+// ═════════════════════════════════════════════════════════════
+const SPARKLES = {
+  enabled: true, // false = no sparkles (e.g. if you paste a sketch that doesn't use s0)
+  count: 260, // how many sparkles (half as many on phones)
+  colors: ['#ff1a1a', '#ff3b2f', '#e00000', '#ff6a4d', '#b30000'],
+  size: 1.2, // dot size
+  driftSpeed: 0.35, // calm drifting speed
+  repelRadius: 160, // how close (px) the mouse must be to push sparkles away
+  repelStrength: 0.9, // how hard the mouse pushes
+  pullStrength: 0.35, // how hard a click / touch pulls them in
+  trailFade: 0.28, // 1 = no trails, smaller = longer glowing trails
+};
 
 // ═════════════════════════════════════════════════════════════
 //  EDIT YOUR HYDRA SKETCH HERE
 //  Paste code from the Hydra web editor (https://hydra.ojack.xyz)
 //  between the curly braces. Same syntax: osc(), noise(), shape(),
 //  .out(), mouse.x, mouse.y, time … all work.
+//  The sparkles arrive as source `s0`, so src(s0) shows them and you
+//  can add Hydra effects on top, e.g. src(s0).modulate(noise(2), 0.01).out()
 //  Audio input (a.fft) is disabled, so don't use `a.` here.
 // ═════════════════════════════════════════════════════════════
 function sketch() {
-  osc(() => 10 + mouse.x / 100, 0.1, 1.2)
-    .rotate(() => mouse.y / 1000)
-    .out();
+  src(s0).out();
 }
 // ═════════════════════════════════════════════════════════════
 //  END OF SKETCH — you shouldn't need to change anything below.
@@ -24,11 +43,10 @@ function sketch() {
 
 const CANVAS_ID = 'hydra-bg';
 
-// Render at a fraction of the screen size: looks the same behind the darkened layer
-// and is much lighter on the GPU (especially on phones).
+// Render resolution: full size on desktop, a bit lower on phones to save battery.
 function renderSize() {
   const small = window.innerWidth < 768;
-  const scale = small ? 0.5 : 0.75;
+  const scale = small ? 0.75 : 1;
   return {
     width: Math.max(1, Math.round(window.innerWidth * scale)),
     height: Math.max(1, Math.round(window.innerHeight * scale)),
@@ -82,6 +100,13 @@ function start() {
     }, { passive: true });
   }
 
+  // The sparkle simulation draws on its own hidden canvas, which Hydra reads as s0.
+  const sparkles = SPARKLES.enabled ? createSparkles(SPARKLES) : null;
+  if (sparkles) {
+    sparkles.resize(size.width, size.height);
+    s0.init({ src: sparkles.canvas });
+  }
+
   try {
     sketch();
   } catch (err) {
@@ -93,7 +118,9 @@ function start() {
   let last = performance.now();
 
   function frame(now) {
-    hydra.tick(Math.min(now - last, 100));
+    const dt = Math.min(now - last, 100);
+    sparkles?.update(dt, now);
+    hydra.tick(dt);
     last = now;
     rafId = requestAnimationFrame(frame);
   }
@@ -111,6 +138,7 @@ function start() {
 
   // A single still frame (used for reduced motion).
   function still() {
+    sparkles?.update(16, performance.now());
     hydra.tick(16);
   }
 
@@ -137,6 +165,7 @@ function start() {
       const widthChanged = next.width !== canvas.width;
       const bigHeightChange = Math.abs(next.height - canvas.height) > 120;
       if (!widthChanged && !bigHeightChange) return;
+      sparkles?.resize(next.width, next.height);
       quietly(() => hydra.setResolution(next.width, next.height));
       if (reducedMotion.matches) still();
     }, 200);
