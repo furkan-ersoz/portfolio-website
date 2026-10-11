@@ -1,5 +1,6 @@
 ---
-// A small vertical fader (volume). Behaviour lives in MusicPanel.astro.
+// The volume fader. At the bottom the sound is off; raising it starts the sound.
+// Behaviour lives in MusicPanel.astro.
 import { CONTROLS } from '../../scripts/music-controls.js';
 
 const c = CONTROLS.volume;
@@ -10,7 +11,7 @@ const c = CONTROLS.volume;
   role="slider"
   tabindex="0"
   data-control="volume"
-  aria-label={c.label}
+  aria-label="Sound volume"
   aria-orientation="vertical"
   aria-valuemin={c.min}
   aria-valuemax={c.max}

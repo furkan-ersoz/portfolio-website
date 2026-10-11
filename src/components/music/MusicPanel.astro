@@ -1,46 +1,37 @@
 ---
-// The small music panel in the bottom-right corner (on every page).
-// Play/Stop, three knobs (Tone, Space, Speed) and a Volume fader.
-// On phones it collapses into a round music button.
-// The sound itself: src/scripts/music.js (engine) and src/scripts/music-pattern.js (the music).
+// The small sound panel in the bottom-right corner (on every page).
+// Two knobs (Tone, Space) and a Volume fader; raising the fader turns the sound on.
+// On phones it collapses into a round button.
+// The sound itself: src/scripts/music.js
 import Knob from './Knob.astro';
 import Fader from './Fader.astro';
 ---
 
-<aside class="music" aria-label="Music" transition:persist="music-panel">
-  <button class="music-toggle" type="button" aria-expanded="false" aria-controls="music-controls" aria-label="Music controls">
+<aside class="music" aria-label="Background sound" transition:persist="music-panel">
+  <button class="music-toggle" type="button" aria-expanded="false" aria-controls="music-controls" aria-label="Sound controls">
     <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor">
       <path d="M9 17.5V5l11-2v12.5a2.5 2.5 0 1 1-1.6-2.33V6.9L10.6 8.3v9.2A2.5 2.5 0 1 1 9 15.17z"></path>
     </svg>
   </button>
 
   <div class="controls" id="music-controls">
-    <button class="play" type="button" aria-pressed="false" aria-label="Play music" data-play>
-      <svg class="icon-play" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-        <path d="M4 2.5v11l9-5.5z" fill="currentColor"></path>
-      </svg>
-      <svg class="icon-stop" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
-        <rect x="3" y="3" width="10" height="10" fill="currentColor"></rect>
-      </svg>
-      <span class="dot" aria-hidden="true"></span>
-    </button>
     <Knob name="tone" />
     <Knob name="space" />
-    <Knob name="speed" />
     <Fader />
   </div>
 </aside>
 
 <script>
   import { CONTROLS } from '../../scripts/music-controls.js';
-  import { state, toggle, setControl, onStatusChange } from '../../scripts/music.js';
+  import { state, setControl, onStatusChange } from '../../scripts/music.js';
 
   type Name = keyof typeof CONTROLS;
   const panel = document.querySelector<HTMLElement>('.music');
 
   if (panel) {
-    // Using the panel shouldn't also count as a click on the page background.
+    // Using the panel shouldn't count as a click/hold on the page (sparkles, sound).
     panel.addEventListener('pointerdown', (e) => e.stopPropagation());
+    panel.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
 
     // ── Phones: open / close the panel ──
     const opener = panel.querySelector<HTMLButtonElement>('.music-toggle')!;
@@ -49,15 +40,8 @@ import Fader from './Fader.astro';
       opener.setAttribute('aria-expanded', String(open));
     });
 
-    // ── Play / Stop ──
-    const playButton = panel.querySelector<HTMLButtonElement>('[data-play]')!;
-    playButton.addEventListener('click', () => toggle());
-    onStatusChange(({ playing, loading }) => {
-      panel.toggleAttribute('data-playing', playing);
-      panel.toggleAttribute('data-loading', loading);
-      playButton.setAttribute('aria-pressed', String(playing));
-      playButton.setAttribute('aria-label', loading ? 'Loading music' : playing ? 'Stop music' : 'Play music');
-    });
+    // Sound on/off indicator (the round phone button turns red)
+    onStatusChange(({ playing }) => panel.toggleAttribute('data-playing', playing));
 
     // ── Knobs and fader ──
     const controls = panel.querySelectorAll<HTMLElement>('[data-control]');
@@ -182,43 +166,6 @@ import Fader from './Fader.astro';
   }
   button:hover {
     border-color: var(--text);
-  }
-
-  .play {
-    position: relative;
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    margin-bottom: 18px; /* line up with the knob circles, not their labels */
-  }
-  .icon-stop,
-  .music[data-playing] .icon-play {
-    display: none;
-  }
-  .music[data-playing] .icon-stop {
-    display: block;
-  }
-  /* small red indicator: on while playing, blinking while loading */
-  .dot {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 5px;
-    height: 5px;
-    background: var(--music-red);
-    opacity: 0;
-  }
-  .music[data-playing] .dot {
-    opacity: 1;
-  }
-  .music[data-loading] .dot {
-    animation: blink 0.8s steps(2) infinite;
-  }
-  @keyframes blink {
-    50% {
-      opacity: 0.2;
-    }
   }
 
   /* The round button only exists on phones */

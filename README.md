@@ -15,6 +15,7 @@ Live at **https://furkanersoz.com**.
 | My photo on the About page            | `src/content/about/photo.png`                     |
 | Email, name, social links             | `src/site.config.ts`                              |
 | The moving background (sparkles/Hydra)| `src/scripts/background.js` → "SPARKLE SETTINGS" / "EDIT YOUR HYDRA SKETCH HERE" |
+| The background sound                  | `src/scripts/music.js` → "SOUND DESIGN"           |
 | Colours, fonts, column width          | `src/styles/global.css` (top of the file)         |
 | Audio / video files                   | `public/audio/…`, `public/video/…`                |
 
@@ -142,43 +143,30 @@ The background is red sparkles on black: moving the mouse pushes them away, and 
 
 The background pauses when the tab is hidden, shows a still frame for visitors who prefer reduced motion, and renders at lower resolution on phones.
 
-## The music (Strudel)
+## The background sound
 
-A small panel in the bottom-right corner plays interactive music made with [Strudel](https://strudel.cc). Nothing loads or plays until a visitor presses Play.
+A small panel in the bottom-right corner controls an atmospheric background sound, generated live in the browser with the Web Audio API (nothing to download, no notes or melodies). It's **off until a visitor raises the Volume fader**; browsers only allow sound after a touch or click.
 
 | File | What it is |
 | --- | --- |
-| `src/scripts/music-pattern.js` | **The music.** Edit the block marked "EDIT YOUR STRUDEL PATTERN HERE". |
-| `src/scripts/music.js` | The engine: loading Strudel, play/stop, fades, limiter, mouse tracking. |
-| `src/scripts/music-controls.js` | Ranges and default values of the knobs. |
+| `src/scripts/music.js` | The sound engine. The **SOUND DESIGN** section holds all the numbers that shape the sound. |
+| `src/scripts/music-controls.js` | Ranges and default values of the knobs and fader. |
 | `src/components/music/` | The panel, knobs and fader. |
+
+**The three layers**
+
+1. **Atmosphere**: rumble, wind, airy hiss and a low hum. Always there while the sound is on.
+2. **Mouse noise**: a very quiet noise through a band-pass filter; its frequency follows the mouse from left (low) to right (high).
+3. **Gesture synth**: a low growl that only appears while the mouse moves (faster = louder and brighter) or a button / finger is held. Silent when there's no input.
 
 **Controls**
 
-- **Play / Stop**: fades in and out. Stopped = no audio processing at all.
-- **Tone**: the base brightness (low-pass filter cutoff). Mouse **up** opens it further, mouse **down** closes it.
-- **Space**: how much reverb.
-- **Speed**: tempo, 60–120 BPM (default 80).
-- **Volume** (fader): master volume; a limiter keeps it from ever getting loud.
-- **Mouse left → right** moves the melody up the scale.
+- **Tone**: changes the whole character of the atmosphere, from a dark rumbling cavern (0%) to bright, airy, restless wind (100%).
+- **Space**: from close and dry (0%) to a huge reverb with long, dense echoes (100%).
+- **Volume** (fader): at the bottom the sound is off; raising it turns it on.
+- **Moving the mouse** makes it a little louder; **holding the mouse button** (or a finger, on phones) makes it more aggressive: saturated, compressed and slightly louder.
 
-Knobs: drag up/down (hold Shift for fine steps), scroll, double-click to reset, or use the arrow keys. On phones the panel folds into a round ♪ button.
-
-**How the mouse and knobs reach the pattern.** The pattern function receives live values wrapped in Strudel's `ref()`, which is read every time Strudel schedules a note:
-
-- `degree`: mouse X as 0–7 scale steps → `n("0 2 4").add(n(degree)).scale("A3:minor:pentatonic")`
-- `brightness`: Tone + mouse Y in Hz → `.lpf(brightness)`
-- `space`: the Space knob → `.room(space)`
-- `mouseX`, `mouseY`, `state`: raw values, e.g. `ref(() => state.mouseX)`
-
-**Pasting a pattern from strudel.cc**
-
-1. Paste it after `return` inside the marked block. If it has several `$:` lines, put them in one `stack(…, …)`.
-2. Remove `setcpm(…)` / `setcps(…)`; the Speed knob controls the tempo.
-3. Connect the knobs: add `.lpf(brightness)` and `.room(space)` (and `.add(n(degree))` before `.scale(…)` for the mouse-X melody).
-4. Patterns that use samples (`s("bd sd")`) need them loaded first; ask for help or stick to the built-in synths (`sine`, `triangle`, `sawtooth`, `square`, noise: `white`, `pink`, `brown`).
-
-**License.** The music uses Strudel, which is licensed under the [GNU AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html). Because of that, the site links to its own source code in the footer (set in `src/site.config.ts` → `sourceCode`).
+Knobs: drag up/down (hold Shift for fine steps), scroll, double-click to reset, or use the arrow keys. On phones the panel folds into a round ♪ button. A limiter keeps it from ever getting loud. When the fader is at Off, or the tab is hidden, no audio processing runs.
 
 ## Adding other kinds of content later (concerts, posts…)
 
@@ -233,7 +221,7 @@ src/
   content.config.ts    ← which fields each content type has
   site.config.ts       ← name, email, navigation, social links
   scripts/background.js← the Hydra sketch
-  scripts/music-pattern.js ← the Strudel music
+  scripts/music.js     ← the background sound
   styles/global.css    ← colours, fonts, layout column
   components/          ← Card, AudioCompare, Header, Footer, …
   layouts/BaseLayout.astro ← shared layout used by every page

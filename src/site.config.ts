@@ -9,7 +9,7 @@ export const site = {
   description:
     'Portfolio of Furkan Ersöz — music information retrieval researcher, computer engineer, musician and mixing engineer.',
   email: 'hfurkanersoz@gmail.com',
-  // The site's source code (linked in the footer; required because the music uses Strudel, AGPL-3.0)
+  // The site's source code (linked in the footer)
   sourceCode: 'https://github.com/furkan-ersoz/portfolio-website',
 };
 
