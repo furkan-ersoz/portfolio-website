@@ -2,7 +2,7 @@
 
 My personal website, built with [Astro](https://astro.build). It's a static site: every page is generated once and published to GitHub Pages automatically whenever I push to `main`.
 
-Live at **https://furkan-ersoz.github.io/portfolio-website/** (and later **https://furkanersoz.com**).
+Live at **https://furkanersoz.com**.
 
 ---
 
@@ -34,7 +34,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:4321/portfolio-website/ — the page updates live as you save files. Press `Ctrl + C` in the terminal to stop it.
+Open http://localhost:4321/ — the page updates live as you save files. Press `Ctrl + C` in the terminal to stop it.
 
 Before pushing, you can check that everything builds:
 
@@ -153,9 +153,9 @@ The workflow in `.github/workflows/deploy.yml` builds and publishes the site on 
 
 1. On GitHub, open the repository → **Settings** → **Pages**.
 2. Under **Build and deployment → Source**, choose **GitHub Actions**.
-3. Push to `main` (or re-run the workflow from the **Actions** tab). After it's green, the site is at https://furkan-ersoz.github.io/portfolio-website/.
+3. Push to `main` (or re-run the workflow from the **Actions** tab).
 
-### Switching to furkanersoz.com (once I own the domain)
+### Custom domain furkanersoz.com (already set up — kept here for reference)
 
 1. **At the domain registrar**, add these DNS records:
 

@@ -9,7 +9,7 @@ import mdx from '@astrojs/mdx';
 // Once furkanersoz.com is connected, set USE_CUSTOM_DOMAIN to true.
 // (See README → "Switching to furkanersoz.com".)
 // ─────────────────────────────────────────────────────────────
-const USE_CUSTOM_DOMAIN = false;
+const USE_CUSTOM_DOMAIN = true;
 
 export default defineConfig({
   site: USE_CUSTOM_DOMAIN ? 'https://furkanersoz.com' : 'https://furkan-ersoz.github.io',
