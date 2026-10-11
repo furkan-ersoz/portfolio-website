@@ -26,7 +26,7 @@ const selected = await getSelectedItems();
   </nav>
 
   <section class="selected" aria-labelledby="selected-title">
-    <h2 id="selected-title">Selected</h2>
+    <h2 id="selected-title" class="list-width">Selected</h2>
     <CardList items={selected} />
   </section>
 </BaseLayout>
@@ -74,25 +74,20 @@ const selected = await getSelectedItems();
     transform: translateY(-2px);
   }
 
-  /* Phones: one clean list, label on the left and an arrow on the right */
+  /* Phones: compact buttons, three on the first row and two on the second */
   @media (max-width: 640px) {
     .big-nav {
-      grid-template-columns: 1fr;
+      display: flex;
+      flex-wrap: wrap;
       gap: 0.5rem;
     }
+    .big-nav li {
+      flex: 1 1 30%;
+    }
     .big-nav a {
-      justify-content: space-between;
-      min-height: 3.25rem;
-      padding: 0 1.1rem;
-      font-size: 1.05rem;
-    }
-    .big-nav a::after {
-      content: '→';
-      color: var(--text-muted);
-    }
-    .big-nav a:hover::after,
-    .big-nav a:focus-visible::after {
-      color: inherit;
+      min-height: 2.75rem;
+      padding: 0 0.5rem;
+      font-size: 0.95rem;
     }
   }
 

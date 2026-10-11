@@ -72,6 +72,12 @@ body {
   padding-inline: var(--gutter);
 }
 
+/* Narrower centred column for the project lists (Home "Selected" and Projects) */
+.list-width {
+  max-width: 620px;
+  margin-inline: auto;
+}
+
 /* ── Typography ── */
 h1,
 h2,
