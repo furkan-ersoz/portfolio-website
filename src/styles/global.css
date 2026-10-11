@@ -6,8 +6,6 @@
 
 :root {
   --bg: #050505;
-  /* How much the moving background is darkened so text stays readable (0 = not at all, 1 = black) */
-  --background-dim: 0.62;
   --surface: rgba(255, 255, 255, 0.04);
   --surface-hover: rgba(255, 255, 255, 0.08);
   --border: rgba(255, 255, 255, 0.12);
@@ -18,7 +16,7 @@
 
   --content-width: 900px;
   --gutter: clamp(16px, 4vw, 24px);
-  --radius: 10px;
+  --radius: 0; /* corner rounding of buttons, frames and images (0 = sharp rectangles) */
 
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
@@ -46,7 +44,10 @@ body {
   font-size: 1.0625rem;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+  /* keeps text readable on top of the bright moving background */
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.85),
+    0 0 14px rgba(0, 0, 0, 0.6);
 }
 
 /* ── The Hydra canvas: fixed behind everything, never catches clicks ── */
@@ -59,16 +60,6 @@ body {
   pointer-events: none;
   user-select: none;
   display: block;
-}
-
-/* Dark layer over the background (drawn after the canvas, below the content) */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  background: rgba(0, 0, 0, var(--background-dim));
-  pointer-events: none;
 }
 
 /* ── The shared content column (same width on every page) ── */
@@ -131,7 +122,7 @@ img {
   line-height: 1;
   padding: 0.4em 0.7em;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius);
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -151,7 +142,7 @@ img {
   font-weight: 600;
   line-height: 1;
   padding: 0.45em 0.75em;
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: var(--text);
   color: var(--bg);
 }
@@ -163,7 +154,7 @@ img {
   gap: 0.5em;
   padding: 0.6em 1.1em;
   border: 1px solid var(--border-strong);
-  border-radius: 999px;
+  border-radius: var(--radius);
   text-decoration: none;
   font-size: 0.95rem;
   background: var(--surface);

@@ -21,27 +21,54 @@ const { items } = Astro.props;
 </ul>
 
 <script>
-  // On touch devices (no hover), colour each card's image when it scrolls into view.
-  let observer: IntersectionObserver | undefined;
+  // On touch devices (no hover), colour only ONE card at a time:
+  // the one whose picture is closest to the middle of the screen.
+  const noHover = window.matchMedia('(hover: none)');
+  let ticking = false;
 
-  function watchCards() {
-    observer?.disconnect();
-    if (!window.matchMedia('(hover: none)').matches) return;
-    if (!('IntersectionObserver' in window)) return;
+  function colourCentreCard() {
+    ticking = false;
+    const cards = document.querySelectorAll<HTMLElement>('.card');
+    if (!cards.length) return;
 
-    observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          entry.target.classList.toggle('in-view', entry.isIntersecting);
-        }
-      },
-      { rootMargin: '-25% 0px -25% 0px' }, // the middle half of the screen
-    );
-    document.querySelectorAll('.card').forEach((card) => observer?.observe(card));
+    const middle = window.innerHeight / 2;
+    let best: HTMLElement | null = null;
+    let bestDistance = Infinity;
+
+    cards.forEach((card) => {
+      const frame = card.querySelector('.frame') ?? card;
+      const box = frame.getBoundingClientRect();
+      const onScreen = box.bottom > 0 && box.top < window.innerHeight;
+      const distance = Math.abs(box.top + box.height / 2 - middle);
+      if (noHover.matches && onScreen && distance < bestDistance) {
+        best = card;
+        bestDistance = distance;
+      }
+    });
+
+    // At the very bottom of the page the last cards can't reach the middle: pick the last visible one.
+    const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    if (noHover.matches && atBottom) {
+      const visible = [...cards].filter((card) => {
+        const box = (card.querySelector('.frame') ?? card).getBoundingClientRect();
+        return box.bottom > 0 && box.top < window.innerHeight;
+      });
+      best = visible.at(-1) ?? best;
+    }
+
+    cards.forEach((card) => card.classList.toggle('in-view', card === best));
   }
 
+  function requestUpdate() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(colourCentreCard);
+  }
+
+  window.addEventListener('scroll', requestUpdate, { passive: true });
+  window.addEventListener('resize', requestUpdate);
   // Runs on first load and after every page change.
-  document.addEventListener('astro:page-load', watchCards);
+  document.addEventListener('astro:page-load', requestUpdate);
 </script>
 
 <style>

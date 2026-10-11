@@ -52,17 +52,14 @@ const { item } = Astro.props;
     object-fit: cover;
     /* Black & white by default … */
     filter: grayscale(1);
-    transition:
-      filter 0.35s ease,
-      transform 0.6s var(--ease);
+    transition: filter 0.35s ease;
   }
-  /* … colour (and a slight zoom) on hover / keyboard focus */
+  /* … colour on hover / keyboard focus */
   .card:hover .cover,
   .card:focus-visible .cover {
     filter: grayscale(0);
-    transform: scale(1.02);
   }
-  /* Touch screens (no hover): colour when scrolled into view (see CardList.astro) */
+  /* Touch screens (no hover): colour when scrolled into view — only one at a time (see CardList.astro) */
   @media (hover: none) {
     :global(.card.in-view) .cover {
       filter: grayscale(0);

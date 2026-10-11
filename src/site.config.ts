@@ -5,10 +5,9 @@
 // ─────────────────────────────────────────────────────────────
 
 export const site = {
-  name: 'Hanifi Furkan Ersöz',
-  subtitle: 'Music information retrieval · Sound & music computing · Musician & mixing engineer',
+  name: 'Furkan Ersöz',
   description:
-    'Portfolio of Hanifi Furkan Ersöz — music information retrieval researcher, computer engineer, musician and mixing engineer.',
+    'Portfolio of Furkan Ersöz — music information retrieval researcher, computer engineer, musician and mixing engineer.',
   email: 'hfurkanersoz@gmail.com',
 };
 
@@ -25,8 +24,8 @@ export const nav = [
 // Replace each 'TODO' with your full profile URL, e.g. 'https://github.com/furkan-ersoz'.
 // A link whose url is still 'TODO' is shown greyed out and isn't clickable.
 export const socials = [
-  { label: 'LinkedIn', icon: 'linkedin', url: 'TODO' },
-  { label: 'GitHub', icon: 'github', url: 'TODO' },
-  { label: 'Instagram', icon: 'instagram', url: 'TODO' },
-  { label: 'Spotify', icon: 'spotify', url: 'TODO' },
+  { label: 'LinkedIn', icon: 'linkedin', url: 'https://www.linkedin.com/in/furkan-ersoz/' },
+  { label: 'GitHub', icon: 'github', url: 'https://github.com/furkan-ersoz' },
+  { label: 'Instagram', icon: 'instagram', url: 'https://www.instagram.com/furkan.ersoz/' },
+  { label: 'Spotify', icon: 'spotify', url: 'TODO' }, // TODO: add when the artist profile exists
 ] as const;

@@ -1,4 +1,4 @@
-# Portfolio — Hanifi Furkan Ersöz
+# Portfolio — Furkan Ersöz
 
 My personal website, built with [Astro](https://astro.build). It's a static site: every page is generated once and published to GitHub Pages automatically whenever I push to `main`.
 
@@ -13,7 +13,7 @@ Live at **https://furkanersoz.com**.
 | A project's text, tags, links, cover  | `src/content/projects/<project>.mdx` (+ its image) |
 | The About text (English + Turkish)    | `src/content/about/about.md`                      |
 | My photo on the About page            | `src/content/about/photo.png`                     |
-| Email, name, subtitle, social links   | `src/site.config.ts`                              |
+| Email, name, social links             | `src/site.config.ts`                              |
 | The moving Hydra background           | `src/scripts/background.js` → "EDIT YOUR HYDRA SKETCH HERE" |
 | Colours, fonts, column width          | `src/styles/global.css` (top of the file)         |
 | Audio / video files                   | `public/audio/…`, `public/video/…`                |

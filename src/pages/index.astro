@@ -11,7 +11,6 @@ const selected = await getSelectedItems();
 <BaseLayout showHeader={false}>
   <section class="hero">
     <h1>{site.name}</h1>
-    <p class="subtitle">{site.subtitle}</p>
   </section>
 
   <nav aria-label="Main">
@@ -41,11 +40,6 @@ const selected = await getSelectedItems();
     font-weight: 700;
     letter-spacing: -0.03em;
     line-height: 1.02;
-  }
-  .subtitle {
-    margin: 1rem 0 0;
-    color: var(--text-muted);
-    font-size: clamp(0.95rem, 2.4vw, 1.1rem);
   }
 
   .big-nav {

@@ -7,7 +7,7 @@
 #   or put another image here and change `photo:` below.
 # ─────────────────────────────────────────────────────────────
 photo: ./photo.png
-photoAlt: Portrait of Hanifi Furkan Ersöz
+photoAlt: Portrait of Furkan Ersöz
 
 en:
   title: About
