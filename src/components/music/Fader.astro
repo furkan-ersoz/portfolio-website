@@ -1,0 +1,87 @@
+---
+// A small vertical fader (volume). Behaviour lives in MusicPanel.astro.
+import { CONTROLS } from '../../scripts/music-controls.js';
+
+const c = CONTROLS.volume;
+---
+
+<div
+  class="fader"
+  role="slider"
+  tabindex="0"
+  data-control="volume"
+  aria-label={c.label}
+  aria-orientation="vertical"
+  aria-valuemin={c.min}
+  aria-valuemax={c.max}
+  aria-valuenow={c.default}
+  aria-valuetext={c.format(c.default)}
+>
+  <div class="track">
+    <div class="fill"></div>
+    <div class="handle"></div>
+  </div>
+  <span class="label">Vol</span>
+  <span class="readout" aria-hidden="true"></span>
+</div>
+
+<style>
+  .fader {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: ns-resize;
+    touch-action: none;
+    user-select: none;
+    outline-offset: 2px;
+  }
+  .track {
+    position: relative;
+    width: 4px;
+    height: 46px;
+    background: rgba(255, 255, 255, 0.18);
+  }
+  .fill {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 30%;
+    background: var(--music-red);
+  }
+  .handle {
+    position: absolute;
+    left: 50%;
+    bottom: 30%;
+    width: 16px;
+    height: 6px;
+    transform: translate(-50%, 50%);
+    background: var(--text);
+    border: 1px solid #000;
+  }
+  .label {
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .readout {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    background: #000;
+    border: 1px solid var(--border-strong);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .fader[data-active] .readout,
+  .fader:focus-visible .readout {
+    opacity: 1;
+  }
+</style>

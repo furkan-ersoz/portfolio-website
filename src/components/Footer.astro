@@ -6,7 +6,10 @@ const year = new Date().getFullYear();
 <footer class="container">
   <div class="footer-inner">
     <a href={`mailto:${site.email}`}>{site.email}</a>
-    <span>© {year} {site.name}</span>
+    <span>
+      © {year} {site.name} ·
+      <a href={site.sourceCode} target="_blank" rel="noopener noreferrer">Source code</a>
+    </span>
   </div>
 </footer>
 

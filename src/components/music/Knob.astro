@@ -1,0 +1,93 @@
+---
+// A small rotary knob (SVG). Behaviour lives in MusicPanel.astro.
+// Drag up/down or scroll to change, double-click to reset, arrow keys on keyboard.
+import { CONTROLS } from '../../scripts/music-controls.js';
+
+interface Props {
+  name: 'tone' | 'space' | 'speed';
+}
+const { name } = Astro.props;
+const c = CONTROLS[name];
+---
+
+<div
+  class="knob"
+  role="slider"
+  tabindex="0"
+  data-control={name}
+  aria-label={c.label}
+  aria-valuemin={c.min}
+  aria-valuemax={c.max}
+  aria-valuenow={c.default}
+  aria-valuetext={c.format(c.default)}
+>
+  <svg viewBox="0 0 40 40" width="40" height="40" aria-hidden="true">
+    <path class="track" d="M 9.39 30.61 A 15 15 0 1 1 30.61 30.61" pathLength="100"></path>
+    <path class="value" d="M 9.39 30.61 A 15 15 0 1 1 30.61 30.61" pathLength="100"></path>
+    <g class="pointer">
+      <line x1="20" y1="20" x2="20" y2="9"></line>
+    </g>
+  </svg>
+  <span class="label">{c.label}</span>
+  <span class="readout" aria-hidden="true"></span>
+</div>
+
+<style>
+  .knob {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    cursor: ns-resize;
+    touch-action: none; /* dragging a knob shouldn't scroll the page */
+    user-select: none;
+    outline-offset: 2px;
+  }
+  svg {
+    display: block;
+    overflow: visible;
+  }
+  path {
+    fill: none;
+    stroke-width: 2.5;
+  }
+  .track {
+    stroke: rgba(255, 255, 255, 0.18);
+  }
+  .value {
+    stroke: var(--music-red);
+    stroke-dasharray: 0 100;
+  }
+  .pointer {
+    transform-origin: 20px 20px;
+  }
+  line {
+    stroke: var(--text);
+    stroke-width: 2;
+    stroke-linecap: square;
+  }
+  .label {
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .readout {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    background: #000;
+    border: 1px solid var(--border-strong);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .knob[data-active] .readout,
+  .knob:focus-visible .readout {
+    opacity: 1;
+  }
+</style>
