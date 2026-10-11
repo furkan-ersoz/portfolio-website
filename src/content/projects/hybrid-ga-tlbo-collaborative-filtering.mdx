@@ -1,0 +1,29 @@
+---
+title: A Hybrid GA–TLBO Optimization Framework for Collaborative Filtering with a Novel Gravitational Similarity Metric
+date: 2026-02-01
+category: Paper
+status: Submitted to Expert Systems with Applications
+summary: A hybrid genetic algorithm and teaching–learning-based optimization framework with a new gravitational similarity metric, reducing prediction error by up to 11.6% over GA and TLBO baselines.
+cover: ./hybrid-ga-tlbo-collaborative-filtering.jpg # TODO: replace placeholder cover
+coverAlt: Placeholder cover for the hybrid GA–TLBO collaborative filtering paper
+tags: [Recommender Systems, Optimization, Collaborative Filtering]
+links:
+  - { label: Paper, url: TODO } # add when published
+featured: true
+---
+
+## Overview
+
+Collaborative filtering recommends items by finding users with similar tastes. This paper improves both halves of that process: how similarity between users is measured, and how the model's weights are optimized.
+
+## Method
+
+The framework combines a **genetic algorithm (GA)** with **teaching–learning-based optimization (TLBO)** into a single hybrid optimizer, and introduces a new **gravitational similarity metric** that models the "pull" between users based on their rating behavior. I contributed substantially to the implementation of both the hybrid optimizer and the similarity metric.
+
+## Results
+
+The hybrid approach reduces prediction error by up to **11.6%** compared with GA and TLBO baselines, and achieves the lowest mean absolute error (MAE) under 10-fold cross-validation.
+
+## Experiments
+
+I designed and executed the large-scale evaluations behind these results, totaling more than 972 compute hours.

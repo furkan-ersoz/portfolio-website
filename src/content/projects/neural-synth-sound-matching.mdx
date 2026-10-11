@@ -1,0 +1,53 @@
+---
+title: Neural Synthesizer Sound Matching with Sequential Frame-Prediction Networks
+date: 2026-06-01
+category: Research
+summary: An end-to-end system that predicts a synthesizer's parameters from a target sound, recreating the sound from audio alone, running in real time inside a VST plugin.
+cover: ./neural-synth-sound-matching.jpg # TODO: replace placeholder cover
+coverAlt: Placeholder cover for the neural synthesizer sound matching project
+tags: [Inverse Synthesis, Deep Learning, JUCE, PyTorch, ONNX]
+links:
+  - { label: Code, url: TODO }
+  - { label: Demo video, url: TODO }
+featured: true
+---
+
+## Overview
+
+Given a short audio clip, this system predicts the full set of synthesizer parameters needed to recreate it — recovering a sound from audio alone. The model runs in real time inside a VST plugin, so sound designers can drop in a target sample and get a playable patch back.
+
+## The synthesizer
+
+Everything is built around a custom polyphonic synthesizer written in C++ with JUCE, exposing 70 parameters across oscillators, filters, envelopes and effects. Owning the synth end to end made it possible to generate unlimited, perfectly labeled training data.
+
+## Architecture
+
+The model uses **sequential frame-prediction**: instead of one network guessing every parameter at once, specialized CNNs follow the synth's audio signal chain, each predicting the parameters of one stage. A module-detecting classifier runs first and gates which specialized networks are used, so the system only predicts parameters for modules that are actually audible.
+
+## Training
+
+The targets are a mix of continuous values (cutoff, envelope times, levels) and categorical choices (waveforms, filter types). Networks are trained on mel-spectrograms with a combined loss: mean squared error for continuous parameters and cross-entropy for categorical ones.
+
+## Real-time inference
+
+Trained models are exported to ONNX and run inside the VST plugin through ONNX Runtime, giving real-time predictions directly in the user's DAW.
+
+## Pipeline
+
+The whole workflow — dataset generation, training and export — is a config-driven Python/PyTorch pipeline. A new version of the synthesizer can be supported with zero code changes, just a new config file.
+
+## Sound examples
+
+{/* TODO: add the audio files to public/audio/synth/ (see README) */}
+
+<AudioCompare
+  title="Example 1"
+  target="/audio/synth/example-1-target.wav"
+  reconstructed="/audio/synth/example-1-reconstructed.wav"
+/>
+
+<AudioCompare
+  title="Example 2"
+  target="/audio/synth/example-2-target.wav"
+  reconstructed="/audio/synth/example-2-reconstructed.wav"
+/>

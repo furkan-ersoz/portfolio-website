@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import CardList from '../../components/CardList.astro';
+import { getSortedProjects, projectToCard } from '../../lib/selected';
+
+const items = (await getSortedProjects()).map(projectToCard);
+---
+
+<BaseLayout title="Projects" description="Research, music, papers and other things I've made.">
+  <h1 class="page-title">Projects</h1>
+  <CardList items={items} />
+</BaseLayout>

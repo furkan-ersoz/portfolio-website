@@ -1,0 +1,150 @@
+---
+// About page. The text itself lives in src/content/about/about.md
+import { Image } from 'astro:assets';
+import { getEntry } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const about = await getEntry('about', 'about');
+if (!about) throw new Error('Missing src/content/about/about.md');
+const { photo, photoAlt, en, tr } = about.data;
+
+// Split the text into paragraphs at empty lines.
+const paragraphs = (text: string) =>
+  text
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+const languages = [
+  { code: 'en', label: 'EN', name: 'English', ...en },
+  { code: 'tr', label: 'TR', name: 'Türkçe', ...tr },
+];
+---
+
+<BaseLayout title="About">
+  <div class="lang-toggle" role="group" aria-label="Language">
+    {
+      languages.map((lang, i) => (
+        <button type="button" data-lang={lang.code} aria-pressed={i === 0 ? 'true' : 'false'} title={lang.name}>
+          {lang.label}
+        </button>
+      ))
+    }
+  </div>
+
+  <div class="about">
+    <Image
+      class="photo"
+      src={photo}
+      alt={photoAlt}
+      widths={[300, 600]}
+      sizes="(max-width: 640px) 60vw, 260px"
+      loading="eager"
+    />
+
+    {
+      languages.map((lang, i) => (
+        <section class="lang-text" lang={lang.code} data-lang-text={lang.code} hidden={i !== 0}>
+          <h1 class="page-title">{lang.title}</h1>
+          {paragraphs(lang.text).map((p) => (
+            <p>{p}</p>
+          ))}
+        </section>
+      ))
+    }
+  </div>
+</BaseLayout>
+
+<script>
+  const STORAGE_KEY = 'about-lang';
+
+  function setLanguage(code: string) {
+    document.querySelectorAll<HTMLElement>('[data-lang-text]').forEach((el) => {
+      el.hidden = el.dataset.langText !== code;
+    });
+    document.querySelectorAll<HTMLButtonElement>('.lang-toggle button').forEach((btn) => {
+      btn.setAttribute('aria-pressed', String(btn.dataset.lang === code));
+    });
+  }
+
+  function initToggle() {
+    const buttons = document.querySelectorAll<HTMLButtonElement>('.lang-toggle button');
+    if (!buttons.length) return; // not on the About page
+
+    // Remember the choice for this visit (works without storage too).
+    let saved: string | null = null;
+    try {
+      saved = sessionStorage.getItem(STORAGE_KEY);
+    } catch {}
+    if (saved === 'en' || saved === 'tr') setLanguage(saved);
+
+    buttons.forEach((btn) =>
+      btn.addEventListener('click', () => {
+        const code = btn.dataset.lang ?? 'en';
+        setLanguage(code);
+        try {
+          sessionStorage.setItem(STORAGE_KEY, code);
+        } catch {}
+      }),
+    );
+  }
+
+  document.addEventListener('astro:page-load', initToggle);
+</script>
+
+<style>
+  .lang-toggle {
+    display: inline-flex;
+    margin-bottom: 1.75rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .lang-toggle button {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    padding: 0.45rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .lang-toggle button + button {
+    border-left: 1px solid var(--border-strong);
+  }
+  .lang-toggle button[aria-pressed='true'] {
+    background: var(--text);
+    color: var(--bg);
+  }
+  .lang-toggle button:focus-visible {
+    outline-offset: -3px;
+  }
+
+  .about {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: clamp(1.5rem, 4vw, 2.5rem);
+    align-items: start;
+  }
+  .photo {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: var(--radius);
+  }
+  .lang-text p {
+    margin: 0 0 1.1rem;
+  }
+  @media (max-width: 640px) {
+    .about {
+      grid-template-columns: 1fr;
+    }
+    .photo {
+      max-width: 240px;
+    }
+  }
+</style>

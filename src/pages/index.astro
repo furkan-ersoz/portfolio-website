@@ -1,0 +1,104 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CardList from '../components/CardList.astro';
+import { site, nav } from '../site.config';
+import { withBase } from '../lib/url';
+import { getSelectedItems } from '../lib/selected';
+
+const selected = await getSelectedItems();
+---
+
+<BaseLayout showHeader={false}>
+  <section class="hero">
+    <h1>{site.name}</h1>
+    <p class="subtitle">{site.subtitle}</p>
+  </section>
+
+  <nav aria-label="Main">
+    <ul class="big-nav">
+      {
+        nav.map((item) => (
+          <li>
+            <a href={withBase(item.href)}>{item.label}</a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+
+  <section class="selected" aria-labelledby="selected-title">
+    <h2 id="selected-title">Selected</h2>
+    <CardList items={selected} />
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    padding-block: clamp(1rem, 6vw, 3rem) clamp(1.5rem, 5vw, 2.5rem);
+  }
+  h1 {
+    font-size: clamp(2.4rem, 9vw, 4.5rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+  }
+  .subtitle {
+    margin: 1rem 0 0;
+    color: var(--text-muted);
+    font-size: clamp(0.95rem, 2.4vw, 1.1rem);
+  }
+
+  .big-nav {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  .big-nav a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 4.25rem;
+    padding: 0.75rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition:
+      background 0.25s,
+      color 0.25s,
+      transform 0.25s var(--ease);
+  }
+  .big-nav a:hover,
+  .big-nav a:focus-visible {
+    background: var(--text);
+    color: var(--bg);
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: 640px) {
+    .big-nav {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    /* the fifth button spans the full row */
+    .big-nav li:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .selected {
+    margin-top: clamp(2.5rem, 7vw, 4rem);
+  }
+  .selected h2 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+</style>
