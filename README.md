@@ -12,7 +12,7 @@ Live at **https://furkanersoz.com**.
 | ------------------------------------- | ------------------------------------------------- |
 | A project's text, tags, links, cover  | `src/content/projects/<project>.mdx` (+ its image) |
 | The About text (English + Turkish)    | `src/content/about/about.md`                      |
-| My photo on the About page            | `src/content/about/photo.png`                     |
+| My photos on the About page           | `src/content/about/photo-wide.jpg` (computers), `photo.png` (phones) |
 | Email, name, social links             | `src/site.config.ts`                              |
 | The moving background (sparkles/Hydra)| `src/scripts/background.js` → "SPARKLE SETTINGS" / "EDIT YOUR HYDRA SKETCH HERE" |
 | The background sound                  | `src/scripts/music.js` → "SOUND DESIGN"           |
@@ -126,7 +126,9 @@ tr:
     İlk paragraf…
 ```
 
-Keep the two-space indent under `text: |` and leave an empty line between paragraphs. To change the photo, replace `photo.png` in the same folder (keep the name, or update the `photo:` line). Portrait images (4:5) look best.
+Keep the two-space indent under `text: |` and leave an empty line between paragraphs.
+
+Photos: on computers the page shows `photo-wide.jpg` (landscape, 3:2) across the full width with the text underneath; on phones it shows `photo.png` (cropped square). To change one, replace the file in the same folder (keep the name, or update the `photoWide:` / `photo:` line).
 
 ## Editing social links
 

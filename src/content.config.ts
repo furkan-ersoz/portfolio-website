@@ -35,7 +35,8 @@ const about = defineCollection({
   loader: glob({ pattern: 'about.md', base: './src/content/about' }),
   schema: ({ image }) =>
     z.object({
-      photo: image(),
+      photo: image(), // portrait photo (phones)
+      photoWide: image().optional(), // landscape photo (computers)
       photoAlt: z.string(),
       en: z.object({ title: z.string(), text: z.string() }),
       tr: z.object({ title: z.string(), text: z.string() }),

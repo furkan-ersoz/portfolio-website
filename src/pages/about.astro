@@ -1,12 +1,15 @@
 ---
 // About page. The text itself lives in src/content/about/about.md
-import { Image } from 'astro:assets';
+import { Image, getImage } from 'astro:assets';
 import { getEntry } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 const about = await getEntry('about', 'about');
 if (!about) throw new Error('Missing src/content/about/about.md');
-const { photo, photoAlt, en, tr } = about.data;
+const { photo, photoWide, photoAlt, en, tr } = about.data;
+
+// Computers get the landscape photo, phones the portrait one.
+const wide = photoWide ? await getImage({ src: photoWide, widths: [700, 1240], format: 'webp' }) : null;
 
 // Split the text into paragraphs at empty lines.
 const paragraphs = (text: string) =>
@@ -33,14 +36,10 @@ const languages = [
   </div>
 
   <div class="about">
-    <Image
-      class="photo"
-      src={photo}
-      alt={photoAlt}
-      widths={[300, 600]}
-      sizes="(max-width: 640px) 60vw, 260px"
-      loading="eager"
-    />
+    <picture class:list={['photo-frame', { 'has-wide': wide }]}>
+      {wide && <source media="(min-width: 641px)" srcset={wide.srcSet.attribute} sizes="620px" type="image/webp" />}
+      <Image class="photo" src={photo} alt={photoAlt} widths={[400, 800]} sizes="100vw" loading="eager" />
+    </picture>
 
     {
       languages.map((lang, i) => (
@@ -124,26 +123,43 @@ const languages = [
     outline-offset: -3px;
   }
 
+  /* Photo on top, text underneath */
   .about {
-    display: grid;
-    grid-template-columns: 200px minmax(0, 1fr);
+    display: flex;
+    flex-direction: column;
     gap: clamp(1.5rem, 4vw, 2.5rem);
-    align-items: start;
+  }
+  .photo-frame {
+    display: block;
   }
   .photo {
     width: 100%;
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 3 / 2; /* the landscape photo on computers */
     object-fit: cover;
+    object-position: 30% 40%; /* keeps the face in view if the frame is cropped */
     border-radius: var(--radius);
+  }
+  /* no landscape photo given: show the portrait one beside the text, as before */
+  .about:has(.photo-frame:not(.has-wide)) {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    align-items: start;
+  }
+  .photo-frame:not(.has-wide) .photo {
+    aspect-ratio: 4 / 5;
   }
   .lang-text p {
     margin: 0 0 1.1rem;
   }
+  /* Phones: the portrait photo, square, above the text (unchanged) */
   @media (max-width: 640px) {
-    .about {
-      grid-template-columns: 1fr;
+    .about,
+    .about:has(.photo-frame:not(.has-wide)) {
+      display: flex;
+      flex-direction: column;
     }
-    .photo {
+    .photo,
+    .photo-frame:not(.has-wide) .photo {
       aspect-ratio: 1 / 1;
       object-position: center 30%;
     }

@@ -3,10 +3,12 @@
 # ABOUT PAGE TEXT (English + Turkish)
 # - Edit the text under `text: |` — keep the two-space indent.
 # - Leave an empty line between paragraphs.
-# - To change the photo, replace photo.png in this folder (same name),
-#   or put another image here and change `photo:` below.
+# - Photos: `photo` (portrait) is used on phones, `photoWide` (landscape)
+#   on computers. Replace the files in this folder with the same names,
+#   or put other images here and change the lines below.
 # ─────────────────────────────────────────────────────────────
 photo: ./photo.png
+photoWide: ./photo-wide.jpg
 photoAlt: Portrait of Furkan Ersöz
 
 en:
