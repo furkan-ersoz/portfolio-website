@@ -3,10 +3,10 @@
 # ABOUT PAGE TEXT (English + Turkish)
 # - Edit the text under `text: |` — keep the two-space indent.
 # - Leave an empty line between paragraphs.
-# - To change the photo, replace photo.jpg in this folder (same name),
+# - To change the photo, replace photo.png in this folder (same name),
 #   or put another image here and change `photo:` below.
 # ─────────────────────────────────────────────────────────────
-photo: ./photo.jpg # TODO: replace with a real photo of you
+photo: ./photo.png
 photoAlt: Portrait of Hanifi Furkan Ersöz
 
 en:

@@ -38,12 +38,7 @@ const isActive = (href: string) => current === href || current.startsWith(`${hre
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem 1.5rem;
-    padding: 0.85rem var(--panel-padding);
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    padding-top: clamp(1rem, 3vw, 1.5rem);
   }
   .home-link {
     font-weight: 600;

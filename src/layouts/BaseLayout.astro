@@ -41,9 +41,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     {showHeader && <Header />}
 
     <main class="container site-main">
-      <div class="panel">
-        <slot />
-      </div>
+      <slot />
     </main>
 
     <Footer />
@@ -55,15 +53,12 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 </html>
 
 <style>
-  .site-main {
-    padding-block: 1rem;
-  }
   :global(body) {
     display: flex;
     flex-direction: column;
-    padding-top: clamp(0.5rem, 3vw, 1.5rem);
   }
   .site-main {
     flex: 1;
+    padding-block: clamp(1.5rem, 5vw, 3rem);
   }
 </style>

@@ -24,7 +24,7 @@ function sketch() {
 
 const CANVAS_ID = 'hydra-bg';
 
-// Render at a fraction of the screen size: looks the same behind a blurred/dark panel
+// Render at a fraction of the screen size: looks the same behind the darkened layer
 // and is much lighter on the GPU (especially on phones).
 function renderSize() {
   const small = window.innerWidth < 768;

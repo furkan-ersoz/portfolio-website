@@ -12,7 +12,7 @@ Live at **https://furkanersoz.com**.
 | ------------------------------------- | ------------------------------------------------- |
 | A project's text, tags, links, cover  | `src/content/projects/<project>.mdx` (+ its image) |
 | The About text (English + Turkish)    | `src/content/about/about.md`                      |
-| My photo on the About page            | `src/content/about/photo.jpg`                     |
+| My photo on the About page            | `src/content/about/photo.png`                     |
 | Email, name, subtitle, social links   | `src/site.config.ts`                              |
 | The moving Hydra background           | `src/scripts/background.js` → "EDIT YOUR HYDRA SKETCH HERE" |
 | Colours, fonts, column width          | `src/styles/global.css` (top of the file)         |
@@ -46,7 +46,7 @@ npm run build
 
 ## Adding a new project (3 steps)
 
-1. **Add the cover image** to `src/content/projects/`, e.g. `my-new-project.jpg` (landscape, about 1600×1000 px, jpg/png/webp).
+1. **Add the cover image** to `src/content/projects/`, e.g. `my-new-project.jpg` (landscape, ideally 16:9 and at least 1600 px wide, jpg/png/webp). On the Projects page and homepage, each project is shown as this picture (in a frame) with the title under it.
 2. **Copy an existing `.mdx` file** in the same folder and rename it, e.g. `my-new-project.mdx`. The file name becomes the web address: `/projects/my-new-project`. Use lowercase letters, numbers and dashes only.
 3. **Edit the top part (between the `---` lines) and the text below it**, then save, commit and push. The site rebuilds by itself in ~1–2 minutes.
 
@@ -58,7 +58,7 @@ title: My New Project                 # required
 date: 2026-09-01                      # required, YYYY-MM-DD — controls the order (newest first)
 dateLabel: '2025 – 2026'              # optional: shown instead of the date
 category: Research                    # required: Research, Music, Paper, Game, …
-summary: One or two sentences shown on the card.   # required
+summary: One or two sentences (used in link previews and search results)   # required
 cover: ./my-new-project.jpg           # required: the image next to this file
 coverAlt: Short description of the image           # optional (for screen readers)
 tags: [Deep Learning, PyTorch]        # optional
@@ -124,7 +124,7 @@ tr:
     İlk paragraf…
 ```
 
-Keep the two-space indent under `text: |` and leave an empty line between paragraphs. To change the photo, replace `photo.jpg` in the same folder (keep the name, or update the `photo:` line). Portrait images (4:5) look best.
+Keep the two-space indent under `text: |` and leave an empty line between paragraphs. To change the photo, replace `photo.png` in the same folder (keep the name, or update the `photo:` line). Portrait images (4:5) look best.
 
 ## Editing social links
 
