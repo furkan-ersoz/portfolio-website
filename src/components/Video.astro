@@ -1,0 +1,19 @@
+---
+// A video player for MDX:  <Video src="/video/demo.mp4" caption="Plugin demo" />
+// Put the file in public/video/…  (For YouTube, use <YouTube id="…" /> instead.)
+import { withBase } from '../lib/url';
+
+interface Props {
+  src: string;
+  caption?: string;
+}
+const { src, caption } = Astro.props;
+const url = withBase(src);
+---
+
+<figure>
+  <video controls preload="metadata" playsinline src={url}>
+    <a href={url}>Download video</a>
+  </video>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>

@@ -1,0 +1,30 @@
+---
+// A single audio player for MDX:  <Audio src="/audio/my-song.mp3" title="My song" />
+// Put the file in public/audio/…
+import { withBase } from '../lib/url';
+
+interface Props {
+  src: string;
+  title?: string;
+}
+const { src, title } = Astro.props;
+const url = withBase(src);
+---
+
+<figure class="media-audio">
+  {title && <figcaption>{title}</figcaption>}
+  <audio controls preload="none" src={url}>
+    <a href={url}>Download audio</a>
+  </audio>
+</figure>
+
+<style>
+  figcaption {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+  }
+  audio {
+    width: 100%;
+  }
+</style>

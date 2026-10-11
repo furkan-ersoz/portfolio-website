@@ -1,0 +1,76 @@
+---
+// Small header for inner pages: name (links home) + navigation.
+import { nav, site } from '../site.config';
+import { withBase, stripBase } from '../lib/url';
+
+const current = stripBase(Astro.url.pathname);
+// "/projects/some-project" still highlights "Projects"
+const isActive = (href: string) => current === href || current.startsWith(`${href}/`);
+---
+
+<header class="container">
+  <div class="header-inner">
+    <a class="home-link" href={withBase('/')}>{site.name}</a>
+    <nav aria-label="Main">
+      <ul>
+        {
+          nav.map((item) => (
+            <li>
+              <a
+                href={withBase(item.href)}
+                class:list={{ active: isActive(item.href) }}
+                aria-current={isActive(item.href) ? 'page' : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .header-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    padding: 0.85rem var(--panel-padding);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .home-link {
+    font-weight: 600;
+    text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.1rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  nav a {
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    padding-block: 0.25rem;
+    border-bottom: 1px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  nav a:hover {
+    color: var(--text);
+  }
+  nav a.active {
+    color: var(--text);
+    border-bottom-color: var(--text);
+  }
+</style>

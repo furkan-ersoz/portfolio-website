@@ -1,0 +1,30 @@
+---
+import { site } from '../site.config';
+const year = new Date().getFullYear();
+---
+
+<footer class="container">
+  <div class="footer-inner">
+    <a href={`mailto:${site.email}`}>{site.email}</a>
+    <span>© {year} {site.name}</span>
+  </div>
+</footer>
+
+<style>
+  .footer-inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    margin-bottom: 1.5rem;
+    padding: 0.85rem var(--panel-padding);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .footer-inner a {
+    color: var(--text);
+  }
+</style>

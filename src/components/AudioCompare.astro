@@ -1,0 +1,90 @@
+---
+// Two audio players side by side, e.g. "Target" vs "Reconstructed".
+// Use it in any .mdx project file like this:
+//
+//   <AudioCompare
+//     title="Example 1 — Pluck"
+//     target="/audio/synth/example-1-target.wav"
+//     reconstructed="/audio/synth/example-1-reconstructed.wav"
+//   />
+//
+// Put the audio files in public/audio/… (paths start with /audio/).
+// Optional: targetLabel / reconstructedLabel to change the labels.
+import { withBase } from '../lib/url';
+
+interface Props {
+  title?: string;
+  target: string;
+  reconstructed: string;
+  targetLabel?: string;
+  reconstructedLabel?: string;
+}
+
+const {
+  title,
+  target,
+  reconstructed,
+  targetLabel = 'Target',
+  reconstructedLabel = 'Reconstructed',
+} = Astro.props;
+
+const players = [
+  { label: targetLabel, src: withBase(target) },
+  { label: reconstructedLabel, src: withBase(reconstructed) },
+];
+---
+
+<figure class="audio-compare">
+  {title && <figcaption>{title}</figcaption>}
+  <div class="players">
+    {
+      players.map((p) => (
+        <div class="player">
+          <span class="label">{p.label}</span>
+          <audio controls preload="none" src={p.src}>
+            <a href={p.src}>Download {p.label.toLowerCase()} audio</a>
+          </audio>
+        </div>
+      ))
+    }
+  </div>
+</figure>
+
+<style>
+  .audio-compare {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+  figcaption {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+  .players {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+  .player {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+  .label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+  audio {
+    width: 100%;
+  }
+  @media (max-width: 640px) {
+    .players {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
