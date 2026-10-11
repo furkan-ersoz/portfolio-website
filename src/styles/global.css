@@ -14,7 +14,7 @@
   --text-muted: #a3a3a3;
   --accent: #ffffff;
 
-  --content-width: 900px;
+  --content-width: 620px; /* width of the content column on every page */
   --gutter: clamp(16px, 4vw, 24px);
   --radius: 0; /* corner rounding of buttons, frames and images (0 = sharp rectangles) */
 
@@ -72,12 +72,6 @@ body {
   padding-inline: var(--gutter);
 }
 
-/* Narrower centred column for the project lists (Home "Selected" and Projects) */
-.list-width {
-  max-width: 620px;
-  margin-inline: auto;
-}
-
 /* ── Typography ── */
 h1,
 h2,
@@ -90,7 +84,7 @@ h4 {
 }
 
 .page-title {
-  font-size: clamp(2rem, 6vw, 2.75rem);
+  font-size: clamp(1.6rem, 5vw, 2rem);
   margin-bottom: 1.5rem;
 }
 

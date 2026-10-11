@@ -18,7 +18,7 @@ const { item } = Astro.props;
       src={item.cover}
       alt={item.coverAlt}
       widths={[600, 900, 1400]}
-      sizes="(max-width: 900px) 100vw, 900px"
+      sizes="(max-width: 620px) 100vw, 620px"
       loading="lazy"
       decoding="async"
     />
@@ -66,7 +66,7 @@ const { item } = Astro.props;
 
   .title {
     margin-top: 0.75rem;
-    font-size: clamp(1.05rem, 2.6vw, 1.3rem);
+    font-size: clamp(1rem, 2.4vw, 1.1rem);
     font-weight: 600;
   }
 </style>

@@ -26,7 +26,7 @@ const selected = await getSelectedItems();
   </nav>
 
   <section class="selected" aria-labelledby="selected-title">
-    <h2 id="selected-title" class="list-width">Selected</h2>
+    <h2 id="selected-title">Selected</h2>
     <CardList items={selected} />
   </section>
 </BaseLayout>
@@ -36,7 +36,7 @@ const selected = await getSelectedItems();
     padding-block: clamp(1rem, 6vw, 3rem) clamp(1.5rem, 5vw, 2.5rem);
   }
   h1 {
-    font-size: clamp(2.4rem, 9vw, 4.5rem);
+    font-size: clamp(2rem, 7vw, 2.75rem);
     font-weight: 700;
     letter-spacing: -0.03em;
     line-height: 1.02;
@@ -54,12 +54,12 @@ const selected = await getSelectedItems();
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 4.25rem;
-    padding: 0.75rem;
+    min-height: 3rem;
+    padding: 0.5rem;
     border: 1px solid var(--border-strong);
     border-radius: var(--radius);
     background: var(--surface);
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: 500;
     text-decoration: none;
     transition:
