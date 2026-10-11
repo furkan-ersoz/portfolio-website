@@ -145,26 +145,27 @@ The background pauses when the tab is hidden, shows a still frame for visitors w
 
 ## The background sound
 
-A small panel in the bottom-right corner controls an atmospheric background sound, generated live in the browser with the Web Audio API (nothing to download, no notes or melodies). It's **off until a visitor raises the Volume fader**; browsers only allow sound after a touch or click.
+A small panel in the bottom-right corner controls an atmospheric background sound, generated live in the browser with the Web Audio API (nothing to download). The Volume fader starts at 15%; browsers only allow sound after a click, tap or key press, so it starts with the visitor's first click or tap anywhere on the page. Pull the fader to the bottom (Off) to silence it.
 
 | File | What it is |
 | --- | --- |
-| `src/scripts/music.js` | The sound engine. The **SOUND DESIGN** section holds all the numbers that shape the sound. |
+| `src/scripts/music.js` | The sound engine. The **SOUND DESIGN** section holds all the numbers that shape the sound; `SCALE` sets the synth's notes. |
 | `src/scripts/music-controls.js` | Ranges and default values of the knobs and fader. |
 | `src/components/music/` | The panel, knobs and fader. |
 
-**The three layers**
+**The layers**
 
-1. **Atmosphere**: rumble, wind, airy hiss and a low hum. Always there while the sound is on.
-2. **Mouse noise**: a very quiet noise through a band-pass filter; its frequency follows the mouse from left (low) to right (high).
-3. **Gesture synth**: a low growl that only appears while the mouse moves (faster = louder and brighter) or a button / finger is held. Silent when there's no input.
+1. **Atmosphere**: a deep rumble and a low hum (around E1). Always there while the sound is on.
+2. **Swell**: a dark, slowly breathing low texture.
+3. **Mouse noise**: a very quiet noise through a band-pass filter whose frequency follows the mouse left → right; it gets quieter the higher it goes.
+4. **Synth**: one instrument voice (two detuned saws + a sub, soft vibrato). Mouse height picks the note (D minor pentatonic, low at the bottom of the screen, high at the top); moving onto a new note or clicking plays it. Only one note sounds at a time, and it's silent without mouse input.
 
 **Controls**
 
-- **Tone**: changes the whole character of the atmosphere, from a dark rumbling cavern (0%) to bright, airy, restless wind (100%).
+- **Tone**: only levels, never pitches or filters. At 0% you hear just the deep atmosphere; turning it up brings in the swell, the mouse noise and the synth.
 - **Space**: from close and dry (0%) to a huge reverb with long, dense echoes (100%).
-- **Volume** (fader): at the bottom the sound is off; raising it turns it on.
-- **Moving the mouse** makes it a little louder; **holding the mouse button** (or a finger, on phones) makes it more aggressive: saturated, compressed and slightly louder.
+- **Volume** (fader): at the bottom the sound is off.
+- **Moving the mouse** makes it a little louder; **holding the mouse button** (or a finger, on phones) makes it more aggressive: saturated, compressed and slightly louder, and the synth note sustains.
 
 Knobs: drag up/down (hold Shift for fine steps), scroll, double-click to reset, or use the arrow keys. On phones the panel folds into a round ♪ button. A limiter keeps it from ever getting loud. When the fader is at Off, or the tab is hidden, no audio processing runs.
 

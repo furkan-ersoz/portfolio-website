@@ -6,8 +6,8 @@ const percent = (v) => `${Math.round(v * 100)}%`;
 export const CONTROLS = {
   tone: { label: 'Tone', min: 0, max: 1, step: 0.01, default: 0.5, format: percent },
   space: { label: 'Space', min: 0, max: 1, step: 0.01, default: 0.4, format: percent },
-  // Volume starts at 0 = off. Raising it starts the sound (browsers only allow audio after a touch/click).
-  volume: { label: 'Volume', min: 0, max: 1, step: 0.01, default: 0, format: (v) => (v === 0 ? 'Off' : percent(v)) },
+  // 0 = off. Browsers only allow sound after a click/tap, so it starts with the visitor's first click or tap.
+  volume: { label: 'Volume', min: 0, max: 1, step: 0.01, default: 0.15, format: (v) => (v === 0 ? 'Off' : percent(v)) },
 };
 
 export const clampControl = (name, value) => {
