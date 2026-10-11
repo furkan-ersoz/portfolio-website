@@ -145,7 +145,7 @@ The background pauses when the tab is hidden, shows a still frame for visitors w
 
 ## The background sound
 
-A small panel in the bottom-right corner controls an atmospheric background sound, generated live in the browser with the Web Audio API (nothing to download). The Volume fader starts at 15%; browsers only allow sound after a click, tap or key press, so it starts with the visitor's first click or tap anywhere on the page. Pull the fader to the bottom (Off) to silence it.
+A small panel in the bottom-right corner controls an atmospheric background sound, generated live in the browser with the Web Audio API (nothing to download). The Volume fader starts at 15%; browsers only allow sound after a click, tap or key press (moving or scrolling doesn't count, on any website), so it starts with the visitor's first click or tap anywhere on the page. Until then the panel shows a small "Click anywhere for sound" hint. Pull the fader to the bottom (Off) to silence it.
 
 | File | What it is |
 | --- | --- |
@@ -156,13 +156,12 @@ A small panel in the bottom-right corner controls an atmospheric background soun
 **The layers**
 
 1. **Atmosphere**: a deep rumble and a low hum (around E1). Always there while the sound is on.
-2. **Swell**: a dark, slowly breathing low texture.
-3. **Mouse noise**: a quiet noise through a band-pass filter whose frequency follows the mouse left → right; a little quieter towards the high end.
-4. **Synth**: one wide synth sound on a single note (D2): detuned saws spread left/right, an octave layer and a clean sub. It starts when the mouse starts moving or is pressed and stops when that stops; a single click plays a short sound. The faster the movement and the longer the press, the more aggressive it gets: brighter, more distorted, wider and a bit louder.
+2. **Pad**: a soft, slowly breathing deep drone. Its quiet upper tones let phone and laptop speakers (which can't play deep bass) carry the atmosphere.
+3. **Synth**: one wide synth sound on a single note (D2): detuned saws spread left/right, an octave layer and a clean sub. It starts when the mouse starts moving or is pressed and stops when that stops; a single click plays a short sound. The faster the movement and the longer the press, the more aggressive it gets: brighter, more distorted, wider and a bit louder.
 
 **Controls**
 
-- **Tone**: only levels, never pitches or filters. At 0% you hear a sparse, quiet hum; turning it up brings in the heavy rumble, the swell, the mouse noise and the synth.
+- **Tone**: only levels, never pitches or filters. At 0% you hear a sparse, quiet hum; turning it up brings in the heavy rumble, the full pad and the synth.
 - **Space**: from close and dry (0%) to a huge reverb with long, dense echoes (100%).
 - **Volume** (fader): at the bottom the sound is off.
 - **Moving the mouse / pressing** (or a finger, on phones) plays the synth; speed and press length make it more aggressive.
