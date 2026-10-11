@@ -145,7 +145,9 @@ The background pauses when the tab is hidden, shows a still frame for visitors w
 
 ## The background sound
 
-A small panel in the bottom-right corner controls an atmospheric background sound, generated live in the browser with the Web Audio API (nothing to download). The Volume fader starts at 15%; browsers only allow sound after a click, tap or key press (moving or scrolling doesn't count, on any website), so it starts with the visitor's first click or tap anywhere on the page. Until then the panel shows a small "Click anywhere for sound" hint. Pull the fader to the bottom (Off) to silence it.
+On computers, a small panel in the bottom-right corner controls an atmospheric background sound, generated live in the browser with the Web Audio API (nothing to download). **Phones and tablets get no sound and no panel** (the sound code isn't even loaded there).
+
+The Volume fader starts at 15%. Browsers only allow sound after a click or key press (moving or scrolling doesn't count, on any website), so it starts with the visitor's first click anywhere on the page; until then the panel shows a small "Click anywhere for sound" hint. Pull the fader to the bottom (Off) to silence it.
 
 | File | What it is |
 | --- | --- |
@@ -155,18 +157,18 @@ A small panel in the bottom-right corner controls an atmospheric background soun
 
 **The layers**
 
-1. **Atmosphere**: a deep rumble and a low hum (around E1). Always there while the sound is on.
-2. **Pad**: a soft, slowly breathing deep drone. Its quiet upper tones let phone and laptop speakers (which can't play deep bass) carry the atmosphere.
-3. **Synth**: one wide synth sound on a single note (D2): detuned saws spread left/right, an octave layer and a clean sub. It starts when the mouse starts moving or is pressed and stops when that stops; a single click plays a short sound. The faster the movement and the longer the press, the more aggressive it gets: brighter, more distorted, wider and a bit louder.
+1. **Rumble**: very deep noise, always there while the sound is on.
+2. **Swell**: dark atmospheric noise that slowly breathes in and out.
+3. **Mouse noise**: a quiet noise through a band-pass filter whose frequency follows the mouse left → right.
+4. **Synth**: one wide synth sound on a single note (D2). It starts when the mouse starts moving or is pressed and stops when that stops; a single click plays a short sound. The faster the movement and the longer the press, the more aggressive it gets: brighter, more distorted, wider and a bit louder.
 
 **Controls**
 
-- **Tone**: only levels, never pitches or filters. At 0% you hear a sparse, quiet hum; turning it up brings in the heavy rumble, the full pad and the synth.
+- **Tone**: only levels, never pitches or filters. Low = a thin, quiet background; high = heavy rumble, big swell, louder mouse noise and synth.
 - **Space**: from close and dry (0%) to a huge reverb with long, dense echoes (100%).
 - **Volume** (fader): at the bottom the sound is off.
-- **Moving the mouse / pressing** (or a finger, on phones) plays the synth; speed and press length make it more aggressive.
 
-Knobs: drag up/down (hold Shift for fine steps), scroll, double-click to reset, or use the arrow keys. On phones the panel folds into a round ♪ button. A limiter keeps it from ever getting loud. When the fader is at Off, or the tab is hidden, no audio processing runs.
+Knobs: drag up/down (hold Shift for fine steps), scroll, double-click to reset, or use the arrow keys. In narrow browser windows the panel folds into a round ♪ button. A limiter keeps it from ever getting loud. When the fader is at Off, or the tab is hidden, no audio processing runs.
 
 ## Adding other kinds of content later (concerts, posts…)
 

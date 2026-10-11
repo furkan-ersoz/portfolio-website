@@ -1,7 +1,8 @@
 ---
-// The small sound panel in the bottom-right corner (on every page).
-// Two knobs (Tone, Space) and a Volume fader; raising the fader turns the sound on.
-// On phones it collapses into a round button.
+// The small sound panel in the bottom-right corner (on every page, computers only).
+// Two knobs (Tone, Space) and a Volume fader.
+// Phones/tablets (touch-only screens) get no panel and no sound at all.
+// In narrow browser windows it collapses into a round button.
 // The sound itself: src/scripts/music.js
 import Knob from './Knob.astro';
 import Fader from './Fader.astro';
@@ -9,10 +10,7 @@ import Fader from './Fader.astro';
 
 <aside class="music" aria-label="Background sound" transition:persist="music-panel">
   <!-- shown until the first click/tap (browsers don't allow sound before that) -->
-  <p class="hint" aria-live="polite">
-    <span class="hint-mouse">Click anywhere for sound</span>
-    <span class="hint-touch">Tap anywhere for sound</span>
-  </p>
+  <p class="hint" aria-live="polite">Click anywhere for sound</p>
   <button class="music-toggle" type="button" aria-expanded="false" aria-controls="music-controls" aria-label="Sound controls">
     <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor">
       <path d="M9 17.5V5l11-2v12.5a2.5 2.5 0 1 1-1.6-2.33V6.9L10.6 8.3v9.2A2.5 2.5 0 1 1 9 15.17z"></path>
@@ -28,15 +26,17 @@ import Fader from './Fader.astro';
 
 <script>
   import { CONTROLS } from '../../scripts/music-controls.js';
-  import { state, setControl, onStatusChange } from '../../scripts/music.js';
 
   type Name = keyof typeof CONTROLS;
   const panel = document.querySelector<HTMLElement>('.music');
+  // Phones and tablets: no sound. The sound engine isn't even downloaded there.
+  const touchOnly = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
 
-  if (panel) {
+  if (panel && !touchOnly) {
+    const { state, setControl, onStatusChange } = await import('../../scripts/music.js');
+
     // Using the panel shouldn't count as a click/hold on the page (sparkles, sound).
     panel.addEventListener('pointerdown', (e) => e.stopPropagation());
-    panel.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
 
     // ── Phones: open / close the panel ──
     const opener = panel.querySelector<HTMLButtonElement>('.music-toggle')!;
@@ -184,15 +184,11 @@ import Fader from './Fader.astro';
   .music[data-waiting] .hint {
     display: block;
   }
-  .hint-touch {
-    display: none;
-  }
-  @media (hover: none) {
-    .hint-mouse {
+
+  /* Phones and tablets: no sound panel */
+  @media (hover: none) and (pointer: coarse) {
+    .music {
       display: none;
-    }
-    .hint-touch {
-      display: inline;
     }
   }
 
