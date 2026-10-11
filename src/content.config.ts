@@ -25,6 +25,8 @@ const projects = defineCollection({
       status: z.string().optional(),
       links: z.array(link).default([]),
       featured: z.boolean().default(false),
+      // Optional: position in the homepage "Selected" list (1 = first). Items without it come after, newest first.
+      order: z.number().optional(),
     }),
 });
 

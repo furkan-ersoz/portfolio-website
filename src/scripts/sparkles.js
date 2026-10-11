@@ -4,6 +4,7 @@
 // background.js feeds this canvas into Hydra as source s0.
 //   • moving the mouse pushes nearby sparkles away
 //   • holding the mouse button (or a finger) pulls them in
+//   • each sparkle fades in, lives a random time, fades out and is reborn elsewhere
 // The look is tuned in background.js (SPARKLE SETTINGS).
 // ─────────────────────────────────────────────────────────────
 
@@ -21,7 +22,11 @@ export function createSparkles(settings) {
   const rand = (min, max) => min + Math.random() * (max - min);
   const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
-  function makeParticle() {
+  const FADE_MS = 1200; // fade-in / fade-out time
+
+  function makeParticle(startAtRandomAge = false) {
+    const [minLife, maxLife] = settings.lifetime;
+    const life = rand(minLife, maxLife) * 1000;
     const angle = Math.random() * Math.PI * 2;
     const speed = rand(0.3, 1) * settings.driftSpeed;
     return {
@@ -34,6 +39,9 @@ export function createSparkles(settings) {
       phase: Math.random() * Math.PI * 2,
       twinkle: rand(1, 4), // twinkles per ~6 seconds
       restOffset: Math.random(), // where it settles in the cloud when pulled
+      life, // how long it lives (ms)
+      // at start-up, spread ages so they don't all appear/disappear together
+      age: startAtRandomAge ? Math.random() * life : 0,
     };
   }
 
@@ -47,14 +55,14 @@ export function createSparkles(settings) {
     // Fewer sparkles on small screens.
     const count = Math.round(window.innerWidth < 768 ? settings.count * 0.5 : settings.count);
     if (particles.length === 0) {
-      particles = Array.from({ length: count }, makeParticle);
+      particles = Array.from({ length: count }, () => makeParticle(true));
     } else {
       // keep existing sparkles, just move them into the new size
       particles.forEach((p) => {
         p.x *= width / oldW;
         p.y *= height / oldH;
       });
-      while (particles.length < count) particles.push(makeParticle());
+      while (particles.length < count) particles.push(makeParticle(true));
       particles.length = count;
     }
     ctx.fillStyle = '#000';
@@ -88,7 +96,13 @@ export function createSparkles(settings) {
     const repelRadius = settings.repelRadius * scale;
     const baseSpeed = settings.driftSpeed;
 
-    for (const p of particles) {
+    for (let i = 0; i < particles.length; i++) {
+      let p = particles[i];
+
+      // Life cycle: when its time is up, a new sparkle is born somewhere else.
+      p.age += dt;
+      if (p.age > p.life) p = particles[i] = makeParticle();
+
       const dx = p.x - pointer.x;
       const dy = p.y - pointer.y;
       const dist = Math.hypot(dx, dy) || 1;
@@ -147,7 +161,9 @@ export function createSparkles(settings) {
     for (const p of particles) {
       // twinkle: mostly dim, with short bright flashes
       const wave = 0.5 + 0.5 * Math.sin(t * p.twinkle + p.phase);
-      const alpha = 0.25 + 0.75 * wave ** 3;
+      // fade in at birth, fade out before disappearing
+      const fade = Math.max(0, Math.min(1, p.age / FADE_MS, (p.life - p.age) / FADE_MS));
+      const alpha = (0.25 + 0.75 * wave ** 3) * fade;
       const r = p.size * scale * (0.8 + 0.6 * wave);
 
       ctx.globalAlpha = alpha * 0.25; // soft glow

@@ -15,6 +15,7 @@ export interface CardItem {
   coverAlt: string;
   tags: string[];
   status?: string;
+  order?: number;
 }
 
 const byNewest = (a: { date: Date }, b: { date: Date }) => b.date.getTime() - a.date.getTime();
@@ -37,17 +38,22 @@ export function projectToCard(entry: CollectionEntry<'projects'>): CardItem {
     coverAlt: d.coverAlt ?? `Cover image for ${d.title}`,
     tags: d.tags,
     status: d.status,
+    order: d.order,
   };
 }
 
-// Everything marked `featured: true`, newest first.
+// "Selected" order: items with an `order` number first (1, 2, 3…), then the rest newest first.
+const bySelectedOrder = (a: CardItem, b: CardItem) =>
+  (a.order ?? Infinity) - (b.order ?? Infinity) || byNewest(a, b);
+
+// Everything marked `featured: true`.
 // When you add a new collection (e.g. concerts), add its featured items here:
 //   const concerts = (await getCollection('concerts')).filter((e) => e.data.featured).map(concertToCard);
-//   return [...projectCards, ...concerts].sort(byNewest);
+//   return [...projectCards, ...concerts].sort(bySelectedOrder);
 export async function getSelectedItems(): Promise<CardItem[]> {
   const projectCards = (await getSortedProjects())
     .filter((entry) => entry.data.featured)
     .map(projectToCard);
 
-  return [...projectCards].sort(byNewest);
+  return [...projectCards].sort(bySelectedOrder);
 }

@@ -74,13 +74,25 @@ const selected = await getSelectedItems();
     transform: translateY(-2px);
   }
 
+  /* Phones: one clean list, label on the left and an arrow on the right */
   @media (max-width: 640px) {
     .big-nav {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
     }
-    /* the fifth button spans the full row */
-    .big-nav li:last-child:nth-child(odd) {
-      grid-column: 1 / -1;
+    .big-nav a {
+      justify-content: space-between;
+      min-height: 3.25rem;
+      padding: 0 1.1rem;
+      font-size: 1.05rem;
+    }
+    .big-nav a::after {
+      content: '→';
+      color: var(--text-muted);
+    }
+    .big-nav a:hover::after,
+    .big-nav a:focus-visible::after {
+      color: inherit;
     }
   }
 

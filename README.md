@@ -67,6 +67,7 @@ links:                                # optional: buttons under the cover
   - { label: Code, url: https://github.com/… }
   - { label: Paper, url: TODO }       # a link set to TODO shows greyed out
 featured: true                        # true = also shown in "Selected" on the homepage
+order: 4                              # optional: position in "Selected" (1 = first); without it, newest first after the numbered ones
 ---
 ```
 
@@ -134,7 +135,7 @@ Open `src/site.config.ts` and replace each `'TODO'` with the full URL, e.g. `'ht
 
 The background is red sparkles on black: moving the mouse pushes them away, and holding the mouse button (or a finger on phones) pulls them into a swirling cloud. Everything is in `src/scripts/background.js`:
 
-- **SPARKLE SETTINGS**: number of sparkles, colours, size, speed, how strongly the mouse pushes and pulls, trail length. Change a number, save, and the page updates.
+- **SPARKLE SETTINGS**: number of sparkles, colours, size, speed, how strongly the mouse pushes and pulls, trail length, and how long each sparkle lives before fading out and a new one appearing elsewhere (`lifetime`). Change a number, save, and the page updates.
 - **EDIT YOUR HYDRA SKETCH HERE**: the Hydra code that draws the final image. The sparkles arrive as source `s0`, so `src(s0).out()` shows them as they are; you can add Hydra effects on top, e.g. `src(s0).modulate(noise(2), 0.01).out()`. To use a completely different Hydra sketch from the [Hydra editor](https://hydra.ojack.xyz), paste it there and set `enabled: false` in the sparkle settings. Microphone input (`a.fft`) is turned off.
 
 (The sparkle simulation itself is in `src/scripts/sparkles.js`; you shouldn't need to touch it.)

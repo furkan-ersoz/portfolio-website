@@ -15,14 +15,15 @@ import { createSparkles } from './sparkles.js';
 // ═════════════════════════════════════════════════════════════
 const SPARKLES = {
   enabled: true, // false = no sparkles (e.g. if you paste a sketch that doesn't use s0)
-  count: 260, // how many sparkles (half as many on phones)
+  count: 320, // how many sparkles at once (half as many on phones)
   colors: ['#ff1a1a', '#ff3b2f', '#e00000', '#ff6a4d', '#b30000'],
-  size: 1.2, // dot size
+  size: 1.0, // dot size
   driftSpeed: 0.35, // calm drifting speed
   repelRadius: 160, // how close (px) the mouse must be to push sparkles away
   repelStrength: 0.9, // how hard the mouse pushes
   pullStrength: 0.35, // how hard a click / touch pulls them in
   trailFade: 0.28, // 1 = no trails, smaller = longer glowing trails
+  lifetime: [3, 12], // each sparkle lives between 3 and 12 seconds, then a new one appears elsewhere
 };
 
 // ═════════════════════════════════════════════════════════════

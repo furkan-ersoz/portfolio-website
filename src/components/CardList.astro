@@ -23,6 +23,7 @@ const { items } = Astro.props;
 <script>
   // On touch devices (no hover), colour only ONE card at a time:
   // the one whose picture is closest to the middle of the screen.
+  // At the very top of the page (and before any scrolling) all stay black & white.
   const noHover = window.matchMedia('(hover: none)');
   let ticking = false;
 
@@ -55,6 +56,8 @@ const { items } = Astro.props;
       });
       best = visible.at(-1) ?? best;
     }
+
+    if (window.scrollY < 10) best = null;
 
     cards.forEach((card) => card.classList.toggle('in-view', card === best));
   }

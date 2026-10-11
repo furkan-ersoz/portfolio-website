@@ -53,6 +53,20 @@ const isActive = (href: string) => current === href || current.startsWith(`${hre
     margin: 0;
     padding: 0;
   }
+  /* Phones: name on top, the five links spread evenly across the full width */
+  @media (max-width: 640px) {
+    .header-inner {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.6rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--border);
+    }
+    ul {
+      justify-content: space-between;
+      gap: 0;
+    }
+  }
   nav a {
     text-decoration: none;
     color: var(--text-muted);
