@@ -4,7 +4,7 @@ date: 2026-06-01
 category: Research
 summary: An AI system that listens to a sound and predicts all 70 parameters of a synthesizer to recreate it, one module at a time along the signal chain, and runs inside a playable audio plugin.
 cover: ./neural-synth-sound-matching.png
-coverAlt: The SynthV3 synthesizer plugin interface
+coverAlt: The synthesizer plugin interface
 tags: [Inverse Synthesis, Deep Learning, PyTorch, JUCE, C++, ONNX]
 links:
   - { label: Code, url: TODO }
@@ -21,9 +21,9 @@ It turns deep-learning research into a working tool: trained models are exported
 
 It started as my Research Project (BLM 4061–4062) in Computer Engineering at Ankara University, supervised by Prof. Dr. Şahin Emrah.
 
-## The synthesizer: SynthV3
+## The synthesizer
 
-Everything is built around **SynthV3**, a custom polyphonic synthesizer written in C++ with JUCE (shown in the cover image). Its modular signal chain has:
+Everything is built around a custom polyphonic synthesizer written in C++ with JUCE (shown in the cover image). Its modular signal chain has:
 
 - two oscillators (OSC A, OSC B) and a noise source,
 - a filter,
@@ -55,7 +55,7 @@ Instead of one network guessing all 70 parameters at once, the problem is split 
 
 ## The model
 
-Every frame predictor shares one configurable architecture (model011):
+Every frame predictor shares one configurable architecture:
 
 - the target and "cheat sheet" mel-spectrograms are stacked and passed through a **CNN** (three Conv → BatchNorm → ReLU → MaxPool blocks);
 - a **pooling** stage summarizes them, either across frequency or as statistics;
@@ -63,8 +63,8 @@ Every frame predictor shares one configurable architecture (model011):
 - the earlier frames' parameters are added through a **conditioning projection**;
 - a **fusion layer** combines everything and feeds two kinds of output heads: a **continuous head** (sigmoid regression) for knobs like cutoff or attack time, and **categorical heads** (one per choice, trained with cross-entropy) for things like waveform or filter type.
 
-![Diagram of the model011 architecture: mel inputs into a CNN stack, frequency or stats pooling, an optional GRU, conditioning projection, a fusion layer, and continuous and categorical output heads](./neuroscillator/model011.png)
-<p class="caption">The frame-predictor architecture (model011). An alternative design, model012, can be swapped in with a one-line config change for comparison.</p>
+![Diagram of a frame predictor: the target sound and the cheat sheet go through a CNN encoder, pooling and an optional GRU; earlier parameters go through a conditioning projection; both meet in a fusion layer that feeds the continuous-value and categorical-choice outputs](./neuroscillator/model.svg)
+<p class="caption">How each frame predictor works. An alternative architecture can be swapped in with a one-line config change for comparison.</p>
 
 ## Data generation
 
@@ -76,7 +76,7 @@ Training data comes from **DataGenerator**, a JUCE/C++ app that plays the synthe
 
 It has a desktop interface for choosing ranges, sampling profiles and which frame renders to save, and a **headless command-line version** for producing large datasets (25,000+ samples) on rented cloud GPUs such as RunPod and Vast.ai.
 
-![The DataGenerator app: per-parameter sampling ranges for SynthV3 on the left, a checklist of frame outputs to save on the right](./neuroscillator/datagenerator.png)
+![The DataGenerator app: per-parameter sampling ranges for the synthesizer on the left, a checklist of frame outputs to save on the right](./neuroscillator/datagenerator.png)
 <p class="caption">DataGenerator: sampling settings per parameter and per-frame audio outputs.</p>
 
 ## Pipeline
