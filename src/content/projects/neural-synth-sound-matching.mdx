@@ -1,10 +1,11 @@
 ---
-title: Neural Synthesizer Sound Matching with Sequential Frame-Prediction Networks
+title: 'Neuroscillator: AI-Driven Synthesizer Sound Matching'
 date: 2026-06-01
 category: Research
-summary: An end-to-end system that predicts a synthesizer's parameters from a target sound, recreating the sound from audio alone, running in real time inside a VST plugin.
+summary: An AI system that listens to a sound and predicts all 70 parameters of a synthesizer to recreate it, one module at a time along the signal chain, and runs inside a playable audio plugin.
 cover: ./neural-synth-sound-matching.png
-tags: [Inverse Synthesis, Deep Learning, JUCE, PyTorch, ONNX]
+coverAlt: The SynthV3 synthesizer plugin interface
+tags: [Inverse Synthesis, Deep Learning, PyTorch, JUCE, C++, ONNX]
 links:
   - { label: Code, url: TODO }
   - { label: Demo video, url: TODO }
@@ -14,27 +15,86 @@ order: 1 # position in the homepage "Selected" list
 
 ## Overview
 
-Given a short audio clip, this system predicts the full set of synthesizer parameters needed to recreate it — recovering a sound from audio alone. The model runs in real time inside a VST plugin, so sound designers can drop in a target sample and get a playable patch back.
+**Neuroscillator** (also called Smart Synthesizer) is an AI system that hears a sound and tells you how to make it. Given a short audio clip, it predicts all **70 parameters** of a synthesizer, from oscillator waveforms to filter, envelopes, LFOs and effects, so the sound can be recreated, played and edited as a real patch.
 
-## The synthesizer
+It turns deep-learning research into a working tool: trained models are exported to ONNX and run inside an audio plugin, bridging neural networks and music production.
 
-Everything is built around a custom polyphonic synthesizer written in C++ with JUCE, exposing 70 parameters across oscillators, filters, envelopes and effects. Owning the synth end to end made it possible to generate unlimited, perfectly labeled training data.
+It started as my Research Project (BLM 4061–4062) in Computer Engineering at Ankara University, supervised by Prof. Dr. Şahin Emrah.
 
-## Architecture
+## The synthesizer: SynthV3
 
-The model uses **sequential frame-prediction**: instead of one network guessing every parameter at once, specialized CNNs follow the synth's audio signal chain, each predicting the parameters of one stage. A module-detecting classifier runs first and gates which specialized networks are used, so the system only predicts parameters for modules that are actually audible.
+Everything is built around **SynthV3**, a custom polyphonic synthesizer written in C++ with JUCE (shown in the cover image). Its modular signal chain has:
 
-## Training
+- two oscillators (OSC A, OSC B) and a noise source,
+- a filter,
+- two envelopes (ENV 1, ENV 2) and four LFOs,
+- reverb and delay.
 
-The targets are a mix of continuous values (cutoff, envelope times, levels) and categorical choices (waveforms, filter types). Networks are trained on mel-spectrograms with a combined loss: mean squared error for continuous parameters and cross-entropy for categorical ones.
+Owning the synthesizer end to end means the system can generate unlimited, perfectly labeled training data.
 
-## Real-time inference
+## Architecture: sequential frame prediction
 
-Trained models are exported to ONNX and run inside the VST plugin through ONNX Runtime, giving real-time predictions directly in the user's DAW.
+Instead of one network guessing all 70 parameters at once, the problem is split along the synth's signal chain into **frames**, one per module, each with its own specialized model.
+
+1. A **Door classifier** listens first and decides which modules are actually in use: whether OSC B, noise, the filter, reverb and delay are switched on, and how many LFOs are active.
+2. **Frame predictors** then run in signal-chain order, each predicting only its own module's parameters. Modules the Door marked as off are skipped.
+3. Each frame predictor gets three inputs: the target sound, a **"cheat sheet"** (a render of everything predicted so far, so it can hear what is still missing), and the parameters predicted by the earlier frames. During training the true earlier values are used instead (teacher forcing).
+
+| # | Frame | Parameters | Runs when |
+| --- | --- | --- | --- |
+| 0 | Door | 6 | always |
+| 1 | OSC A | 10 | always |
+| 2 | OSC B | 11 | OSC B is on |
+| 3 | Noise | 3 | noise is on |
+| 4 | Filter | 6 | filter is on |
+| 5 | ENV 1 | 7 | always |
+| 6 | ENV 2 | 7 | OSC B is on |
+| 7–10 | LFO 1–4 | 4 each | that LFO is active |
+| 11 | Reverb | 6 | reverb is on |
+| 12 | Delay | 5 | delay is on |
+
+## The model
+
+Every frame predictor shares one configurable architecture (model011):
+
+- the target and "cheat sheet" mel-spectrograms are stacked and passed through a **CNN** (three Conv → BatchNorm → ReLU → MaxPool blocks);
+- a **pooling** stage summarizes them, either across frequency or as statistics;
+- an optional **GRU** adds a view of how the sound evolves over time;
+- the earlier frames' parameters are added through a **conditioning projection**;
+- a **fusion layer** combines everything and feeds two kinds of output heads: a **continuous head** (sigmoid regression) for knobs like cutoff or attack time, and **categorical heads** (one per choice, trained with cross-entropy) for things like waveform or filter type.
+
+![Diagram of the model011 architecture: mel inputs into a CNN stack, frequency or stats pooling, an optional GRU, conditioning projection, a fusion layer, and continuous and categorical output heads](./neuroscillator/model011.png)
+<p class="caption">The frame-predictor architecture (model011). An alternative design, model012, can be swapped in with a one-line config change for comparison.</p>
+
+## Data generation
+
+Training data comes from **DataGenerator**, a JUCE/C++ app that plays the synthesizer with randomized parameters and saves, for each sample:
+
+- the full audio,
+- a separate render after every active frame (the "cheat sheets"),
+- a labeled CSV row with all 70 parameters, the on/off flags and the LFO count.
+
+It has a desktop interface for choosing ranges, sampling profiles and which frame renders to save, and a **headless command-line version** for producing large datasets (25,000+ samples) on rented cloud GPUs such as RunPod and Vast.ai.
+
+![The DataGenerator app: per-parameter sampling ranges for SynthV3 on the left, a checklist of frame outputs to save on the right](./neuroscillator/datagenerator.png)
+<p class="caption">DataGenerator: sampling settings per parameter and per-frame audio outputs.</p>
 
 ## Pipeline
 
-The whole workflow — dataset generation, training and export — is a config-driven Python/PyTorch pipeline. A new version of the synthesizer can be supported with zero code changes, just a new config file.
+The whole workflow is a **config-driven** Python/PyTorch pipeline: mel-spectrogram feature extraction (128 mel bands), dataset loading, Door and frame training, per-frame evaluation, and ONNX export. The synthesizer and its frames are described in a single YAML config, so a new synth version needs **zero code changes**, only a new config file.
+
+## Real-time inference
+
+Trained models are exported to **ONNX** and run inside the plugin through ONNX Runtime, so a sound designer can drop in a target sound and get a playable patch back, directly in their DAW.
+
+## Validation
+
+The system is tested at four levels, following IEEE 829: unit tests for each component, integration tests of the data → training → checkpoint chain, end-to-end system runs (generate, train, evaluate, export), and acceptance tests on a full 25,000+ sample dataset. The acceptance targets are:
+
+- **Continuous parameters:** mean squared error below 0.05
+- **Categorical parameters** (waveform, filter type, LFO shape…): accuracy above 75%
+- **Door classifier:** F1 above 0.80 for every on/off flag, and above 70% accuracy for the LFO count
+- **ONNX export:** predictions identical to PyTorch (max difference below 1e-5)
 
 ## Sound examples
 

@@ -229,6 +229,26 @@ const isTodo = (url: string) => !url || url.trim().toUpperCase().startsWith('TOD
     border-top: 1px solid var(--border);
     margin: 2.5rem 0;
   }
+  .prose :global(table) {
+    display: block; /* lets a wide table scroll sideways on phones */
+    overflow-x: auto;
+    width: 100%;
+    margin: 1.5rem 0;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  .prose :global(th),
+  .prose :global(td) {
+    padding: 0.45rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    white-space: nowrap;
+  }
+  .prose :global(th) {
+    font-weight: 600;
+    color: var(--text-muted);
+    border-bottom-color: var(--border-strong);
+  }
   .prose > :global(:first-child) {
     margin-top: 0;
   }
