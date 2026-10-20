@@ -18,6 +18,14 @@ order: 4 # position in the homepage "Selected" list
 
 Everything runs on **Google Apps Script** with scheduled triggers, so it works in the background without a server. A Google Sheet is the single source of truth for projects and tasks, and the written outputs land in my **Obsidian** vault as Markdown notes.
 
+<div class="figure-narrow">
+
+![The weekly report email: a weekly reward with a photo, totals for hours worked, days worked, deep work and breaks, charts of daily work, projects and break time, and written sections on the week, deep work, project balance, next week and the recommendation weights](./autonomous-work-logger/weekly-report.png)
+
+<p class="caption">A real weekly report (translated from Turkish): a reward for the week, totals, charts, Claude's review of the week, and its note on whether to change the recommendation weights.</p>
+
+</div>
+
 ## How it works
 
 | When | What happens |
@@ -52,17 +60,9 @@ Claude turns this into a readable daily summary and per-project progress notes, 
 
 ## Weekly: strategy review that tunes itself
 
-Every Sunday the system builds a dashboard of where the time actually went, then asks Claude to compare the week against my long-term goals. The review is saved to Obsidian and sent as an HTML email with charts.
+Every Sunday the system builds a dashboard of where the time actually went, then asks Claude to compare the week against my long-term goals. The review is saved to Obsidian and sent as an HTML email with charts (like the one at the top of this page). Claude also picks a small reward for the week from a list I keep, each with its own image.
 
 The review also closes the loop: Claude suggests new **weights** for the morning recommendation score, and the system updates its own configuration, so next week's plans reflect what this week revealed.
-
-<div class="figure-narrow">
-
-![The weekly report email: a weekly reward, totals for hours worked, days worked, deep work and breaks, charts of daily work, projects and break time, and written sections on the week, deep work, project balance, next week and the recommendation weights](./autonomous-work-logger/weekly-report.png)
-
-<p class="caption">A real weekly report (translated from Turkish): totals, charts, Claude's review of the week, and its note on whether to change the recommendation weights.</p>
-
-</div>
 
 ## Task generation
 
