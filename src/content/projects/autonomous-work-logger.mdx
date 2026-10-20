@@ -18,13 +18,9 @@ order: 4 # position in the homepage "Selected" list
 
 Everything runs on **Google Apps Script** with scheduled triggers, so it works in the background without a server. A Google Sheet is the single source of truth for projects and tasks, and the written outputs land in my **Obsidian** vault as Markdown notes.
 
-<div class="figure-narrow">
+![The top of a weekly report email: the week's reward, a sushi dinner with a photo, and four totals: 26.07 hours of work, 7 days worked, 56% deep work and a 59% break ratio](./autonomous-work-logger/weekly-top.png)
 
-![The weekly report email: a weekly reward with a photo, totals for hours worked, days worked, deep work and breaks, charts of daily work, projects and break time, and written sections on the week, deep work, project balance, next week and the recommendation weights](./autonomous-work-logger/weekly-report.png)
-
-<p class="caption">A real weekly report (translated from Turkish): a reward for the week, totals, charts, Claude's review of the week, and its note on whether to change the recommendation weights.</p>
-
-</div>
+<p class="caption">The top of a real weekly report: the week's reward and its totals. All emails on this page are real outputs, translated from Turkish.</p>
 
 ## How it works
 
@@ -38,15 +34,17 @@ Everything runs on **Google Apps Script** with scheduled triggers, so it works i
 
 Each project gets a **recommendation score** from three signals: its **strategic value**, the **urgency of its deadline** (rising as the deadline gets closer) and its **recent activity**. The score is computed in code, so it stays transparent and reproducible.
 
-Claude then receives the scored tasks, my goals and progress notes, the last two weeks of daily logs and today's calendar, and proposes a realistic plan for the day. The plan is saved back to the sheet and sent as a morning email.
+Claude then receives the scored tasks, my goals and progress notes, the last two weeks of daily logs and today's calendar, and proposes a realistic plan for the day. Every task comes with its time budget and the reason it was chosen:
 
-<div class="figure-narrow">
+![The daily plan email: four tasks for an 8-hour day, each with its project, task ID, a one-line reason and the hours planned](./autonomous-work-logger/morning-plan.png)
 
-![The morning email: yesterday's summary, today's focus, warnings, a four-task plan with hours and reasons, and daily routines](./autonomous-work-logger/morning-email.png)
+<p class="caption">The morning email's plan: four tasks, eight hours, each with the reason it made the list.</p>
 
-<p class="caption">A real morning email (translated from Turkish): yesterday's summary, today's focus, warnings, and an 8-hour plan with the reason behind each task.</p>
+Above the plan, the email sums up the day's focus in one sentence and flags what needs attention: blocked time in the calendar, projects that have gone quiet, deadlines that may have passed, and tasks that keep being skipped.
 
-</div>
+![Today's focus in one sentence, and a heads-up box with four warnings about a blocked hour, a project untouched for 25 days, a possibly missed deadline and a blocked task](./autonomous-work-logger/morning-headsup.png)
+
+<p class="caption">Today's focus and the warnings Claude raises before the plan.</p>
 
 ## Evening: an automatic daily log
 
@@ -56,13 +54,33 @@ At night the system gathers the day's evidence:
 - commits and changed files from **GitHub**,
 - events from **Google Calendar** and edited files from **Google Drive**.
 
-Claude turns this into a readable daily summary and per-project progress notes, which are written into the Obsidian vault through the GitHub API. Actual time spent is also written back to the task list, so the difference between *planned* and *done* is tracked over time.
+Claude turns this into a readable daily summary and per-project progress notes, which are written into the Obsidian vault through the GitHub API. The next morning's email opens with that summary:
+
+![Yesterday's summary: total work of 5 hours 24 minutes and a paragraph describing the waitlist page built for the SmartSynthesizer project](./autonomous-work-logger/morning-yesterday.png)
+
+<p class="caption">The daily log, written by Claude from the day's time entries and commits.</p>
+
+Actual time spent is also written back to the task list, so the difference between *planned* and *done* is tracked over time.
 
 ## Weekly: strategy review that tunes itself
 
-Every Sunday the system builds a dashboard of where the time actually went, then asks Claude to compare the week against my long-term goals. The review is saved to Obsidian and sent as an HTML email with charts (like the one at the top of this page). Claude also picks a small reward for the week from a list I keep, each with its own image.
+Every Sunday the system builds a dashboard of where the time actually went: deep versus shallow work per day, hours per project, and time lost to breaks. Claude also picks a small reward for the week from a list I keep, each with its own image (the sushi dinner at the top of this page).
 
-The review also closes the loop: Claude suggests new **weights** for the morning recommendation score, and the system updates its own configuration, so next week's plans reflect what this week revealed.
+![Three charts: daily work split into deep and shallow hours, a donut of hours per project, and daily break time](./autonomous-work-logger/weekly-charts.png)
+
+<p class="caption">The week in charts: daily deep and shallow work, hours per project, and break time.</p>
+
+Claude then compares the week against my long-term goals and writes a short review: what moved forward, how the projects were balanced, and what to focus on next week. The review is saved to Obsidian and sent as an HTML email.
+
+![Written sections of the weekly report: a review of the week, the balance between projects with hours for each, and three goals for next week](./autonomous-work-logger/weekly-review.png)
+
+<p class="caption">Claude's review of the week, the project balance and next week's goals.</p>
+
+The review also closes the loop: Claude suggests new **weights** for the morning recommendation score, and the system updates its own configuration, so next week's plans reflect what this week revealed. When the evidence isn't strong enough yet, it says so and keeps the current weights:
+
+![The recommendation weights note: not enough of a pattern yet to change the weights, with the current values strategic 0.42, deadline 0.4 and activity 0.18](./autonomous-work-logger/weekly-weights.png)
+
+<p class="caption">The self-tuning step: Claude's decision on the recommendation weights.</p>
 
 ## Task generation
 

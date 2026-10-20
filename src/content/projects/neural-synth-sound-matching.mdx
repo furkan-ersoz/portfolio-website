@@ -64,6 +64,7 @@ Every frame predictor shares one configurable architecture:
 - a **fusion layer** combines everything and feeds two kinds of output heads: a **continuous head** (sigmoid regression) for knobs like cutoff or attack time, and **categorical heads** (one per choice, trained with cross-entropy) for things like waveform or filter type.
 
 ![Diagram of a frame predictor: the target sound and the cheat sheet go through a CNN encoder, pooling and an optional GRU; earlier parameters go through a conditioning projection; both meet in a fusion layer that feeds the continuous-value and categorical-choice outputs](./neuroscillator/model.svg)
+
 <p class="caption">How each frame predictor works. An alternative architecture can be swapped in with a one-line config change for comparison.</p>
 
 ## Data generation
@@ -77,6 +78,7 @@ Training data comes from **DataGenerator**, a JUCE/C++ app that plays the synthe
 It has a desktop interface for choosing ranges, sampling profiles and which frame renders to save, and a **headless command-line version** for producing large datasets (25,000+ samples) on rented cloud GPUs such as RunPod and Vast.ai.
 
 ![The DataGenerator app: per-parameter sampling ranges for the synthesizer on the left, a checklist of frame outputs to save on the right](./neuroscillator/datagenerator.png)
+
 <p class="caption">DataGenerator: sampling settings per parameter and per-frame audio outputs.</p>
 
 ## Pipeline
