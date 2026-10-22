@@ -229,6 +229,36 @@ const isTodo = (url: string) => !url || url.trim().toUpperCase().startsWith('TOD
     border-top: 1px solid var(--border);
     margin: 2.5rem 0;
   }
+  /* a grid of big numbers (e.g. "400+ members") */
+  .prose :global(.stats) {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.6rem;
+    margin: 1.5rem 0;
+  }
+  .prose :global(.stats > div) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.9rem 0.85rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .prose :global(.stats strong) {
+    font-size: 1.6rem;
+    line-height: 1.1;
+    color: var(--text);
+  }
+  .prose :global(.stats span) {
+    font-size: 0.8rem;
+    line-height: 1.35;
+    color: var(--text-muted);
+  }
+  @media (max-width: 640px) {
+    .prose :global(.stats) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
   /* tall, narrow images (e.g. a phone or email screenshot): centred, not full width */
   .prose :global(.figure-narrow) {
     max-width: 440px;
