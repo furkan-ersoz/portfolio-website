@@ -23,7 +23,7 @@ This project tackles that in two ways: a new way of measuring similarity, and an
 
 ## How it works
 
-![The pipeline: ratings go into four similarity metrics (Gravity, proposed; Pearson; Extended Jaccard; Cosine); each produces kNN predictions; these form an initial population of 90 candidates, which goes through 500 generations of a Genetic Algorithm followed by Teaching–Learning-Based Optimization; the best solution is rounded and evaluated with MAE and RMSE over 10 folds](./hybrid-ga-tlbo/pipeline.svg)
+![The pipeline: ratings go into four similarity metrics (Gravity, proposed; Pearson; Extended Jaccard; Cosine); each produces kNN predictions; these form an initial population of candidates, which goes through repeated generations of a Genetic Algorithm followed by Teaching–Learning-Based Optimization; the best solution is rounded and evaluated with MAE and RMSE over 10 folds](./hybrid-ga-tlbo/pipeline.svg)
 
 <p class="caption">From raw ratings to evaluated predictions.</p>
 
@@ -39,11 +39,11 @@ It is used side by side with three classical measures: Pearson correlation, exte
 
 ### From predictions to a population
 
-Each of the four measures, at its own best neighbourhood size *k*, produces a complete set of predictions. These four sets, a constant baseline and random combinations of them make up a population of **90 candidate solutions**.
+Each of the four measures, at its own best neighbourhood size *k*, produces a complete set of predictions. These four sets, a constant baseline and random combinations of them make up the initial **population of candidate solutions**; its size is a configurable parameter.
 
 ### The hybrid optimizer
 
-The population then evolves for **500 generations**. Every generation runs two optimizers in a row:
+The population then evolves over **a configurable number of generations**. Every generation runs two optimizers in a row:
 
 - a **Genetic Algorithm**: the best candidates are kept (elitism), parents are picked by roulette-wheel selection, and new candidates come from crossover and mutation;
 - **Teaching–Learning-Based Optimization**: the best candidates act as "teachers" of small classes, and the rest improve by learning from their teacher (teacher phase) and from each other (learner phase).
@@ -72,17 +72,13 @@ The article is under revision, so the numbers will be published here once it is 
 
 A research method is only as trustworthy as the code that runs it. Much of my work went into making the experiments fast, reproducible and verifiable.
 
-**5–1,800× faster, with identical results.** I rewrote the similarity measures, kNN prediction and TLBO phases with NumPy, keeping the order of every sum and every use of the random number generator exactly the same. An automated check confirms the fast version is bit-for-bit identical to the reference one: similarity matrices, predictions, and every candidate after 20 generations. On one fold, computing the similarity matrices went from 1,039 seconds to 0.6.
+**5–1,800× faster, with identical results.** I rewrote the similarity measures, kNN prediction and TLBO phases with NumPy, keeping the order of every sum and every use of the random number generator exactly the same. An automated check confirms the fast version is bit-for-bit identical to the reference one: similarity matrices, predictions, and every candidate after many generations. On one fold, computing the similarity matrices went from 1,039 seconds to 0.6.
 
 ![Chart comparing the reference and optimised implementations on one fold of MovieLens Latest, on a log time scale: similarity matrices 1,792 times faster, kNN prediction 20 times faster, optimisation per generation 5 times faster](./hybrid-ga-tlbo/speedup.png)
 
 <p class="caption">Reference versus optimised implementation on one fold. Both give the same results.</p>
 
-**Reproducible data.** A dataset divider builds seeded 10-fold splits from the raw MovieLens, FilmTrust and Amazon files and stores a SHA-256 hash of every split, so any machine can confirm it is working with exactly the same data.
-
-**Catching a data bug.** While rebuilding the pipeline I found that an earlier split of one dataset trained on only 10% of the data and leaked half of its test set into training. I rebuilt the splits and re-ran every affected experiment.
-
-**Experiment management.** Results are cached by a hash of both the parameters and the code, so identical settings reuse saved populations. Folds run in parallel, *k* is swept from 5 to 200 neighbours, and a local queue runs experiments unattended.
+**Experiment management.** Results are cached by a hash of both the parameters and the code, so identical settings reuse saved populations. Folds run in parallel, *k* is swept over a wide range of neighbourhood sizes, and a local queue runs experiments unattended.
 
 **Cloud runs.** MovieLens 1M ran on RunPod: a 16-vCPU pod for the *k* sweep and the hybrid optimizer (about an hour) and an RTX A4000 GPU pod for the learned baselines (about 50 minutes), each preceded by a smoke test.
 
