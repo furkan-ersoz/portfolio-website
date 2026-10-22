@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 690" width="620" height="690" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <title>The pipeline: ratings, four similarity metrics, kNN predictions, an initial population of 90, then 500 generations of GA and TLBO, rounded predictions and evaluation</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L8 4 L0 8 z" fill="#a3a3a3"/>
+    </marker>
+    <style>
+      .box { fill: #000; stroke: rgba(255,255,255,0.4); stroke-width: 1; }
+      .input { stroke: rgba(255,255,255,0.85); }
+      .accent { stroke: #3987e5; stroke-width: 1.5; }
+      .loop { fill: none; stroke: #ff3b2f; stroke-width: 1; stroke-dasharray: 5 4; }
+      .output { stroke: #ff3b2f; }
+      .title { fill: #f5f5f5; font-size: 14px; font-weight: 600; text-anchor: middle; }
+      .sub { fill: #a3a3a3; font-size: 12px; text-anchor: middle; }
+      .tag { fill: #ff3b2f; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; }
+      .proposed { fill: #3987e5; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-anchor: middle; }
+      .line { stroke: #a3a3a3; stroke-width: 1; fill: none; marker-end: url(#arrow); }
+      .plain { stroke: #a3a3a3; stroke-width: 1; fill: none; }
+    </style>
+  </defs>
+
+  <!-- 1. ratings -->
+  <rect class="box input" x="160.5" y="4.5" width="299" height="52"/>
+  <text class="title" x="310" y="27">Ratings</text>
+  <text class="sub" x="310" y="45">who rated which item, and how much</text>
+
+  <!-- 2. four similarity metrics -->
+  <path class="plain" d="M310 57 V70"/>
+  <path class="line" d="M310 70 H77 V86"/>
+  <path class="line" d="M310 70 H233 V86"/>
+  <path class="line" d="M310 70 H543 V86"/>
+  <path class="line" d="M310 70 H388 V86"/>
+  <rect class="box accent" x="4.5" y="88.5" width="145" height="62"/>
+  <text class="proposed" x="77" y="106">PROPOSED</text>
+  <text class="title" x="77" y="124">Gravity</text>
+  <text class="sub" x="77" y="141">similarity</text>
+  <rect class="box" x="160.5" y="88.5" width="145" height="62"/>
+  <text class="title" x="233" y="124">Pearson</text>
+  <text class="sub" x="233" y="141">correlation</text>
+  <rect class="box" x="315.5" y="88.5" width="145" height="62"/>
+  <text class="title" x="388" y="124">Extended</text>
+  <text class="sub" x="388" y="141">Jaccard</text>
+  <rect class="box" x="470.5" y="88.5" width="145" height="62"/>
+  <text class="title" x="543" y="124">Cosine</text>
+  <text class="sub" x="543" y="141">similarity</text>
+
+  <!-- 3. kNN predictions -->
+  <path class="plain" d="M77 151 V166 H310"/>
+  <path class="plain" d="M233 151 V166"/>
+  <path class="plain" d="M388 151 V166"/>
+  <path class="plain" d="M543 151 V166 H310"/>
+  <path class="line" d="M310 166 V182"/>
+  <rect class="box" x="110.5" y="184.5" width="399" height="52"/>
+  <text class="title" x="310" y="207">kNN predictions</text>
+  <text class="sub" x="310" y="225">one full set per metric, each at its own best k</text>
+
+  <!-- 4. initial population -->
+  <path class="line" d="M310 237 V256"/>
+  <rect class="box" x="110.5" y="258.5" width="399" height="52"/>
+  <text class="title" x="310" y="281">Initial population: 90 candidates</text>
+  <text class="sub" x="310" y="299">the four prediction sets, a constant baseline, random mixes</text>
+
+  <!-- 5. GA–TLBO loop -->
+  <path class="line" d="M310 311 V340"/>
+  <rect class="loop" x="40.5" y="328.5" width="539" height="218" rx="0"/>
+  <rect x="52" y="320" width="196" height="18" fill="#000"/>
+  <text class="tag" x="60" y="333">× 500 GENERATIONS</text>
+
+  <rect class="box" x="70.5" y="342.5" width="479" height="78"/>
+  <text class="title" x="310" y="366">Genetic Algorithm</text>
+  <text class="sub" x="310" y="386">keep the best (elitism) · roulette-wheel selection</text>
+  <text class="sub" x="310" y="404">crossover · mutation</text>
+
+  <path class="line" d="M310 421 V440"/>
+  <rect class="box" x="70.5" y="442.5" width="479" height="78"/>
+  <text class="title" x="310" y="466">Teaching–Learning-Based Optimization</text>
+  <text class="sub" x="310" y="486">the best candidates become "teachers" of classes</text>
+  <text class="sub" x="310" y="504">teacher phase · learner phase</text>
+
+  <!-- loop back -->
+  <path class="line" d="M550 481 H566 V381 H552"/>
+
+  <!-- 6. output -->
+  <path class="line" d="M310 547 V566"/>
+  <rect class="box" x="110.5" y="568.5" width="399" height="52"/>
+  <text class="title" x="310" y="591">Best solution</text>
+  <text class="sub" x="310" y="609">predictions rounded to the rating scale</text>
+
+  <path class="line" d="M310 621 V634"/>
+  <rect class="box output" x="110.5" y="636.5" width="399" height="52"/>
+  <text class="title" x="310" y="659">Evaluation</text>
+  <text class="sub" x="310" y="677">MAE and RMSE over 10 folds, on five datasets</text>
+</svg>

@@ -1,29 +1,93 @@
 ---
-title: A Hybrid GA–TLBO Optimization Framework for Collaborative Filtering with a Novel Gravitational Similarity Metric
+title: Hybrid GA–TLBO Collaborative Filtering with Gravitational Similarity
 date: 2026-02-01
 category: Paper
-status: Submitted to Expert Systems with Applications
-summary: A hybrid genetic algorithm and teaching–learning-based optimization framework with a new gravitational similarity metric, reducing prediction error by up to 11.6% over GA and TLBO baselines.
+status: Under revision
+summary: A recommender-system research project that refines rating predictions with a hybrid Genetic Algorithm and Teaching–Learning-Based Optimization, starting from a proposed gravity-inspired user similarity.
 cover: ./hybrid-ga-tlbo-collaborative-filtering.png
-tags: [Recommender Systems, Optimization, Collaborative Filtering]
+coverAlt: A research paper on collaborative filtering with genetic algorithms
+tags: [Recommender Systems, Metaheuristics, Collaborative Filtering, Python, PyTorch]
 links:
   - { label: Paper, url: TODO } # add when published
 featured: true
 order: 3 # position in the homepage "Selected" list
 ---
 
-## Overview
+## The problem
 
-Collaborative filtering recommends items by finding users with similar tastes. This paper improves both halves of that process: how similarity between users is measured, and how the model's weights are optimized.
+Recommender systems guess how much you would like something from the ratings people have already given. A classic way to do this is to find the users whose tastes are most similar to yours and use their ratings to predict yours (*k*-nearest neighbours).
 
-## Method
+The weak point is the word *similar*. The prediction is only as good as the similarity measure, and a single fixed measure often leaves a lot of accuracy on the table, especially when most users have rated only a handful of items.
 
-The framework combines a **genetic algorithm (GA)** with **teaching–learning-based optimization (TLBO)** into a single hybrid optimizer, and introduces a new **gravitational similarity metric** that models the "pull" between users based on their rating behavior. I contributed substantially to the implementation of both the hybrid optimizer and the similarity metric.
+This project tackles that in two ways: a new way of measuring similarity, and an optimizer that refines the predictions instead of trusting any single measure. The article is currently under revision; I'm one of its authors, and my work covered the implementation, the experiments and the engineering behind them.
+
+## How it works
+
+![The pipeline: ratings go into four similarity metrics (Gravity, proposed; Pearson; Extended Jaccard; Cosine); each produces kNN predictions; these form an initial population of 90 candidates, which goes through 500 generations of a Genetic Algorithm followed by Teaching–Learning-Based Optimization; the best solution is rounded and evaluated with MAE and RMSE over 10 folds](./hybrid-ga-tlbo/pipeline.svg)
+
+<p class="caption">From raw ratings to evaluated predictions.</p>
+
+### Gravitational similarity
+
+The proposed similarity borrows its idea from Newton's law of gravitation. Every rating gets a **mass**, based on how many ratings its user and its item have, and a **distance**, based on how far the rating is from the top of the scale. Two users "attract" each other through the items they have both rated, and their similarity is that attraction relative to their total attraction.
+
+![Two users drawn as bodies on either side, connected through three items they both rated by lines of different thickness; a key explains mass, distance and similarity](./hybrid-ga-tlbo/gravity.svg)
+
+<p class="caption">The gravity analogy: users are bodies that pull on each other through shared items.</p>
+
+It is used side by side with three classical measures: Pearson correlation, extended Jaccard and cosine similarity.
+
+### From predictions to a population
+
+Each of the four measures, at its own best neighbourhood size *k*, produces a complete set of predictions. These four sets, a constant baseline and random combinations of them make up a population of **90 candidate solutions**.
+
+### The hybrid optimizer
+
+The population then evolves for **500 generations**. Every generation runs two optimizers in a row:
+
+- a **Genetic Algorithm**: the best candidates are kept (elitism), parents are picked by roulette-wheel selection, and new candidates come from crossover and mutation;
+- **Teaching–Learning-Based Optimization**: the best candidates act as "teachers" of small classes, and the rest improve by learning from their teacher (teacher phase) and from each other (learner phase).
+
+The best final solution is rounded to the rating scale and evaluated.
+
+## Datasets
+
+The method is tested on five public datasets from three domains, ranging from 35 thousand to 1 million ratings, with 93.7% to 99.7% of all possible user–item ratings missing.
+
+| Dataset | Domain |
+| --- | --- |
+| MovieLens 100K | Movies |
+| MovieLens Latest Small | Movies |
+| MovieLens 1M | Movies (1 million ratings) |
+| FilmTrust | Movies, trust-aware, half-star scale |
+| Amazon Digital Music | E-commerce (5-core) |
 
 ## Results
 
-The hybrid approach reduces prediction error by up to **11.6%** compared with GA and TLBO baselines, and achieves the lowest mean absolute error (MAE) under 10-fold cross-validation.
+Every dataset is evaluated with MAE and RMSE over 10 folds, against kNN predictions from all four similarity measures and against two learned models: **SVD++** (matrix factorization) and **GC-MC** (a graph neural network). All models are compared on predictions rounded to the rating scale.
 
-## Experiments
+The article is under revision, so the numbers will be published here once it is accepted.
 
-I designed and executed the large-scale evaluations behind these results, totaling more than 972 compute hours.
+## Engineering
+
+A research method is only as trustworthy as the code that runs it. Much of my work went into making the experiments fast, reproducible and verifiable.
+
+**5–1,800× faster, with identical results.** I rewrote the similarity measures, kNN prediction and TLBO phases with NumPy, keeping the order of every sum and every use of the random number generator exactly the same. An automated check confirms the fast version is bit-for-bit identical to the reference one: similarity matrices, predictions, and every candidate after 20 generations. On one fold, computing the similarity matrices went from 1,039 seconds to 0.6.
+
+![Chart comparing the reference and optimised implementations on one fold of MovieLens Latest, on a log time scale: similarity matrices 1,792 times faster, kNN prediction 20 times faster, optimisation per generation 5 times faster](./hybrid-ga-tlbo/speedup.png)
+
+<p class="caption">Reference versus optimised implementation on one fold. Both give the same results.</p>
+
+**Reproducible data.** A dataset divider builds seeded 10-fold splits from the raw MovieLens, FilmTrust and Amazon files and stores a SHA-256 hash of every split, so any machine can confirm it is working with exactly the same data.
+
+**Catching a data bug.** While rebuilding the pipeline I found that an earlier split of one dataset trained on only 10% of the data and leaked half of its test set into training. I rebuilt the splits and re-ran every affected experiment.
+
+**Experiment management.** Results are cached by a hash of both the parameters and the code, so identical settings reuse saved populations. Folds run in parallel, *k* is swept from 5 to 200 neighbours, and a local queue runs experiments unattended.
+
+**Cloud runs.** MovieLens 1M ran on RunPod: a 16-vCPU pod for the *k* sweep and the hybrid optimizer (about an hour) and an RTX A4000 GPU pod for the learned baselines (about 50 minutes), each preceded by a smoke test.
+
+**Learned baselines.** SVD++ and GC-MC are implemented in PyTorch, and their results match published reference values.
+
+## Tech stack
+
+Python, NumPy, PyTorch, multiprocessing, Bash, Git and GitHub, RunPod (cloud CPU and GPU), LaTeX.

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 400" width="620" height="400" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <title>Gravitational similarity: two users attract each other through the items they both rated</title>
+  <defs>
+    <style>
+      .user { fill: #000; stroke: #3987e5; stroke-width: 1.5; }
+      .glow { fill: #3987e5; opacity: 0.12; }
+      .item { fill: #000; stroke: rgba(255,255,255,0.6); stroke-width: 1; }
+      .pull { stroke: #3987e5; fill: none; stroke-linecap: round; }
+      .name { fill: #f5f5f5; font-size: 15px; font-weight: 600; text-anchor: middle; }
+      .small { fill: #a3a3a3; font-size: 12px; text-anchor: middle; }
+      .itemText { fill: #f5f5f5; font-size: 12px; text-anchor: middle; }
+      .key { fill: #f5f5f5; font-size: 13px; font-weight: 600; }
+      .def { fill: #a3a3a3; font-size: 13px; }
+      .rule { stroke: rgba(255,255,255,0.15); stroke-width: 1; }
+    </style>
+  </defs>
+
+  <!-- pull lines (thicker = stronger attraction through that item) -->
+  <path class="pull" stroke-width="4" opacity="0.9" d="M138 140 Q220 70 286 62"/>
+  <path class="pull" stroke-width="2.5" opacity="0.75" d="M146 150 L286 150"/>
+  <path class="pull" stroke-width="1.2" opacity="0.6" d="M138 162 Q220 232 286 238"/>
+  <path class="pull" stroke-width="2" opacity="0.7" d="M482 140 Q400 70 334 62"/>
+  <path class="pull" stroke-width="3.5" opacity="0.85" d="M474 150 L334 150"/>
+  <path class="pull" stroke-width="1.5" opacity="0.6" d="M482 162 Q400 232 334 238"/>
+
+  <!-- users -->
+  <circle class="glow" cx="90" cy="150" r="70"/>
+  <circle class="user" cx="90" cy="150" r="54"/>
+  <text class="name" x="90" y="148">User A</text>
+  <text class="small" x="90" y="166">a body</text>
+  <circle class="glow" cx="530" cy="150" r="70"/>
+  <circle class="user" cx="530" cy="150" r="54"/>
+  <text class="name" x="530" y="148">User B</text>
+  <text class="small" x="530" y="166">a body</text>
+
+  <!-- shared items -->
+  <rect class="item" x="286.5" y="44.5" width="47" height="36"/>
+  <text class="itemText" x="310" y="67">Item</text>
+  <rect class="item" x="286.5" y="132.5" width="47" height="36"/>
+  <text class="itemText" x="310" y="155">Item</text>
+  <rect class="item" x="286.5" y="220.5" width="47" height="36"/>
+  <text class="itemText" x="310" y="243">Item</text>
+  <text class="small" x="310" y="280">items both users rated</text>
+
+  <!-- key -->
+  <line class="rule" x1="0" y1="300.5" x2="620" y2="300.5"/>
+  <text class="key" x="0" y="326">Mass</text>
+  <text class="def" x="110" y="326">how many ratings the user and the item have</text>
+  <text class="key" x="0" y="352">Distance</text>
+  <text class="def" x="110" y="352">how far the rating sits from the top of the scale</text>
+  <text class="key" x="0" y="378">Similarity</text>
+  <text class="def" x="110" y="378">their pull through shared items, relative to their total pull</text>
+</svg>
