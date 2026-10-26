@@ -32,3 +32,14 @@ export const socials = [
   { label: 'YouTube', icon: 'youtube', url: 'https://www.youtube.com/@furkan_ersoz' },
   { label: 'Spotify', icon: 'spotify', url: 'TODO' }, // TODO: add when the artist profile exists
 ] as const;
+
+// Streaming platforms shown on the Listen page. Same rule as above:
+// a platform whose url is still 'TODO' is shown greyed out with a "Coming soon" label.
+export const listen = [
+  { label: 'SoundCloud', icon: 'soundcloud', url: 'https://soundcloud.com/furkan-ersoez-580543519' },
+  { label: 'Spotify', icon: 'spotify', url: 'TODO' },
+  { label: 'Apple Music', icon: 'applemusic', url: 'TODO' },
+  { label: 'YouTube Music', icon: 'youtubemusic', url: 'TODO' },
+  { label: 'Bandcamp', icon: 'bandcamp', url: 'TODO' },
+  { label: 'Deezer', icon: 'deezer', url: 'TODO' },
+] as const;
