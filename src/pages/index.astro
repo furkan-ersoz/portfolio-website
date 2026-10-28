@@ -5,7 +5,8 @@ import { site, nav } from '../site.config';
 import { withBase } from '../lib/url';
 import { getSelectedItems } from '../lib/selected';
 
-const selected = await getSelectedItems();
+// Homepage shows only the top 3; the projects page still lists everything.
+const selected = (await getSelectedItems()).slice(0, 3);
 ---
 
 <BaseLayout showHeader={false}>
