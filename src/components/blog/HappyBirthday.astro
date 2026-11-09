@@ -1,10 +1,11 @@
 ---
 // Listen: Happy Birthday (public domain) in 12-TET and in Rast (53-grid), in three registers.
-import { HAPPY_BIRTHDAY, HB_RAST, HB_WESTERN } from '../../lib/tuning';
+import { HAPPY_BIRTHDAY, HB_RAST, HB_TURKISH, HB_WESTERN } from '../../lib/tuning';
 
 const BEAT_MS = 600; // 100 BPM
 const melody = HAPPY_BIRTHDAY.map(([note, octave, beats]) => ({
   note,
+  turkish: HB_TURKISH[`${note}${octave}`],
   ms: beats * BEAT_MS,
   western: octave * 1200 + HB_WESTERN[note],
   rast: octave * 1200 + HB_RAST[note],
@@ -38,10 +39,13 @@ const REGISTERS = [
     }
   </fieldset>
 
+  <p class="hb-names" aria-hidden="true">Note names: <span class="hb-names-mode">Western</span></p>
   <ol class="hb-notes" aria-hidden="true">
     {
       melody.map((n) => (
-        <li class:list={{ moved: Math.abs(n.western - n.rast) > 10 }}>{n.note}</li>
+        <li class:list={{ moved: Math.abs(n.western - n.rast) > 10 }} data-western={n.note} data-turkish={n.turkish}>
+          {n.note}
+        </li>
       ))
     }
   </ol>
@@ -73,6 +77,15 @@ const REGISTERS = [
 
     const base = () => Number(fig.querySelector<HTMLInputElement>('input[name="hb-register"]:checked')?.value ?? 392);
     const mark = (i: number) => chips.forEach((c, j) => c.classList.toggle('now', j === i));
+    const namesMode = fig.querySelector<HTMLElement>('.hb-names-mode')!;
+    let names: 'western' | 'rast' = 'western';
+    // Western letters for 12-TET, Turkish (AEU) names for Rast
+    function showNames(tuning: 'western' | 'rast') {
+      if (tuning === names) return;
+      names = tuning;
+      chips.forEach((c) => (c.textContent = tuning === 'rast' ? c.dataset.turkish! : c.dataset.western!));
+      namesMode.textContent = tuning === 'rast' ? 'Turkish (Rast = G)' : 'Western';
+    }
 
     function sequence(tuning: 'western' | 'rast') {
       const g = base();
@@ -91,13 +104,15 @@ const REGISTERS = [
       const parts: ('western' | 'rast')[] = mode === 'ab' ? ['western', 'rast'] : [mode as 'western' | 'rast'];
       const notes = parts.flatMap((p, i) => (i ? [rest, ...sequence(p)] : sequence(p)));
       const n = melody.length;
+      showNames(parts[0]);
       stop = playSequence(notes, {
         onStep: (i) => {
           // which part are we in? (A/B has a rest between the two)
           const inB = mode === 'ab' && i > n;
           const idx = inB ? i - n - 1 : i;
           if (idx < 0 || idx >= n) return mark(-1);
-          const part = mode === 'ab' ? (inB ? 'rast' : 'western') : mode;
+          const part = mode === 'ab' ? (inB ? 'rast' : 'western') : (mode as 'western' | 'rast');
+          showNames(part);
           status.textContent = `Playing: ${part === 'rast' ? 'Rast (53-grid)' : 'Western (12-TET)'} · G = ${base()} Hz`;
           mark(idx);
         },
@@ -120,12 +135,25 @@ const REGISTERS = [
 
 <style>
   .hb {
-    --fig-accent: #ff5a3c;
+    --c-surface: #111111;
+    --c-ink: #f2f2f2;
+    --c-ink-2: #cfcfcf;
+    --c-accent: #d95926; /* orange: notes that move in Rast */
     margin: 2rem 0;
     padding: 1rem;
-    background: rgba(0, 0, 0, 0.78);
-    border: 1px solid var(--border);
+    background: var(--c-surface);
+    border: 1px solid var(--border-strong);
     font-size: 0.9rem;
+    text-shadow: none;
+  }
+  .hb-names {
+    margin: 0.9rem 0 0;
+    font-size: 0.8rem;
+    color: var(--c-ink-2);
+  }
+  .hb-names-mode {
+    color: var(--c-ink);
+    font-weight: 600;
   }
   .hb-title {
     margin: 0 0 0.75rem;
@@ -150,7 +178,7 @@ const REGISTERS = [
     margin: 0.85rem 0 0;
     padding: 0;
     border: 0;
-    color: var(--text-muted);
+    color: var(--c-ink-2);
     font-size: 0.85rem;
   }
   .hb-register legend {
@@ -174,7 +202,7 @@ const REGISTERS = [
     flex-wrap: wrap;
     gap: 0.25rem;
     list-style: none;
-    margin: 0.9rem 0 0;
+    margin: 0.4rem 0 0;
     padding: 0;
     font-family: var(--font-mono);
     font-size: 0.8rem;
@@ -183,12 +211,13 @@ const REGISTERS = [
     min-width: 2.1em;
     padding: 0.15em 0.3em;
     text-align: center;
-    border: 1px solid var(--border);
-    color: var(--text-muted);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--c-ink);
   }
   .hb-notes li.moved {
     text-decoration: underline;
-    text-decoration-color: var(--fig-accent);
+    text-decoration-color: var(--c-accent);
+    text-decoration-thickness: 2px;
     text-underline-offset: 3px;
   }
   .hb-notes li.now {
@@ -200,11 +229,11 @@ const REGISTERS = [
   .hb-status {
     margin: 0.5rem 0 0;
     font-size: 0.8rem;
-    color: var(--text-muted);
+    color: var(--c-ink-2);
   }
   figcaption {
     margin-top: 0.5rem;
     font-size: 0.85rem;
-    color: var(--text-muted);
+    color: var(--c-ink-2);
   }
 </style>

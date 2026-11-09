@@ -53,7 +53,7 @@ const isActive = (href: string) => current === href || current.startsWith(`${hre
     margin: 0;
     padding: 0;
   }
-  /* Phones: name on top, the five links spread evenly across the full width */
+  /* Phones: name on top, the links in a grid of three per row (so none gets squeezed off narrow screens) */
   @media (max-width: 640px) {
     .header-inner {
       flex-direction: column;
@@ -63,8 +63,15 @@ const isActive = (href: string) => current === href || current.startsWith(`${hre
       border-bottom: 1px solid var(--border);
     }
     ul {
-      justify-content: space-between;
-      gap: 0;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.15rem 0.5rem;
+    }
+    li:nth-child(3n + 2) {
+      text-align: center;
+    }
+    li:nth-child(3n) {
+      text-align: right;
     }
   }
   nav a {

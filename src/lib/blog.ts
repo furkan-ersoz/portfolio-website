@@ -1,13 +1,11 @@
 // Blog helpers: the list of posts (newest first) and a reading-time estimate.
-import { getCollection, type CollectionEntry } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import { getSortedPosts } from './selected';
 
 export type Post = CollectionEntry<'blog'>;
 
-// Drafts show while running `npm run dev`, never in the built site.
-export async function getPosts(): Promise<Post[]> {
-  const posts = await getCollection('blog', (p) => import.meta.env.DEV || !p.data.draft);
-  return posts.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
-}
+// Newest first. Drafts show while running `npm run dev`, never in the built site.
+export const getPosts = getSortedPosts;
 
 // Rough reading time from the post's source (code, tags and imports removed).
 export function readingMinutes(post: Post): number {

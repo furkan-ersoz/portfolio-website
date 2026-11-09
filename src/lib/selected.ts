@@ -19,6 +19,7 @@ export interface CardItem {
 }
 
 const byNewest = (a: { date: Date }, b: { date: Date }) => b.date.getTime() - a.date.getTime();
+const isDraft = (data: { draft?: boolean }) => !import.meta.env.DEV && data.draft === true;
 
 export async function getSortedProjects(): Promise<CollectionEntry<'projects'>[]> {
   const projects = await getCollection('projects');
@@ -42,18 +43,60 @@ export function projectToCard(entry: CollectionEntry<'projects'>): CardItem {
   };
 }
 
+export async function getSortedPosts(): Promise<CollectionEntry<'blog'>[]> {
+  const posts = await getCollection('blog', (p) => !isDraft(p.data));
+  // newest first; posts of a series on the same day: later part first
+  return posts.sort((a, b) => byNewest(a.data, b.data) || (b.data.part ?? 0) - (a.data.part ?? 0));
+}
+
+export async function getSortedMusic(): Promise<CollectionEntry<'music'>[]> {
+  const music = await getCollection('music');
+  return music.sort((a, b) => byNewest(a.data, b.data));
+}
+
+export function postToCard(entry: CollectionEntry<'blog'>): CardItem {
+  const d = entry.data;
+  return {
+    title: d.title,
+    href: withBase(`/blog/${entry.id}`),
+    date: d.date,
+    category: d.category,
+    summary: d.summary,
+    cover: d.cover,
+    coverAlt: d.coverAlt ?? `Cover image for ${d.title}`,
+    tags: d.tags,
+    order: d.order,
+  };
+}
+
+export function musicToCard(entry: CollectionEntry<'music'>): CardItem {
+  const d = entry.data;
+  return {
+    title: d.title,
+    href: withBase(`/music/${entry.id}`),
+    date: d.date,
+    dateLabel: d.dateLabel,
+    category: d.category,
+    summary: d.summary,
+    cover: d.cover,
+    coverAlt: d.coverAlt ?? `Cover image for ${d.title}`,
+    tags: d.tags,
+    status: d.status,
+    order: d.order,
+  };
+}
+
 // "Selected" order: items with an `order` number first (1, 2, 3…), then the rest newest first.
 const bySelectedOrder = (a: CardItem, b: CardItem) =>
   (a.order ?? Infinity) - (b.order ?? Infinity) || byNewest(a, b);
 
-// Everything marked `featured: true`.
-// When you add a new collection (e.g. concerts), add its featured items here:
-//   const concerts = (await getCollection('concerts')).filter((e) => e.data.featured).map(concertToCard);
-//   return [...projectCards, ...concerts].sort(bySelectedOrder);
+// Everything marked `featured: true`: projects, blog posts and music, as one list of cards.
+// To add another collection later, map its featured entries to cards and add them here.
 export async function getSelectedItems(): Promise<CardItem[]> {
-  const projectCards = (await getSortedProjects())
-    .filter((entry) => entry.data.featured)
-    .map(projectToCard);
-
-  return [...projectCards].sort(bySelectedOrder);
+  const featured = <T extends { data: { featured: boolean } }>(list: T[]) => list.filter((e) => e.data.featured);
+  return [
+    ...featured(await getSortedProjects()).map(projectToCard),
+    ...featured(await getSortedPosts()).map(postToCard),
+    ...featured(await getSortedMusic()).map(musicToCard),
+  ].sort(bySelectedOrder);
 }

@@ -1,0 +1,367 @@
+---
+// Figure A — my results on the "minimum duration for pitch sensation" curve (course slide 14, redrawn).
+// x = frequency (log, 50 Hz–10 kHz), y = note duration (0–80 ms, plus a band for 150 ms above an axis break).
+// Every marker is a button that plays its condition.
+import {
+  DURATIONS, MELODY_DURATIONS, MELODY_RESULTS, MIN_DURATION_CURVE, REGISTERS, TWO_NOTE, cycles, melodyLevel,
+} from '../../lib/bass';
+
+const W = 720;
+const H = 470;
+const m = { l: 62, r: 24 };
+const PLOT_TOP = 104; // y of 80 ms
+const PLOT_BOTTOM = 404; // y of 0 ms
+const BAND_Y = 50; // y of 150 ms
+const LOG_MIN = Math.log10(50);
+const LOG_MAX = Math.log10(10000);
+const X = (f: number) => m.l + ((Math.log10(f) - LOG_MIN) / (LOG_MAX - LOG_MIN)) * (W - m.l - m.r);
+const Y = (ms: number) => (ms >= 150 ? BAND_Y : PLOT_BOTTOM - (ms / 80) * (PLOT_BOTTOM - PLOT_TOP));
+
+const curve = MIN_DURATION_CURVE.map(([f, ms], i) => `${i ? 'L' : 'M'}${X(f).toFixed(1)},${Y(ms).toFixed(1)}`).join('');
+const xTicks = [50, 100, 200, 500, 1000, 2000, 5000, 10000];
+const yTicks = [0, 20, 40, 60, 80];
+const fmtHz = (f: number) => (f >= 1000 ? `${f / 1000}k` : String(f));
+
+type Kind = 'pair' | 'change' | 'recognized';
+interface Mark {
+  kind: Kind;
+  reg: string;
+  hz: number;
+  ms: number;
+  level: 0 | 0.5 | 1;
+  x: number;
+  y: number;
+  label: string;
+}
+const OFFSET: Record<Kind, number> = { pair: -13, change: 0, recognized: 13 };
+const LEVEL_TEXT = { 0: 'not reached', 0.5: 'reached about half the time (50%)', 1: 'reached' };
+const durName = (ms: number) => DURATIONS.find((d) => d.ms === ms)!.name;
+
+const marks: Mark[] = REGISTERS.flatMap((r) => {
+  const base = { reg: r.name, hz: r.hz };
+  const pairs: Mark[] = DURATIONS.map((d, i) => {
+    const heard = TWO_NOTE[r.name][i];
+    return {
+      ...base,
+      kind: 'pair',
+      ms: d.ms,
+      level: heard ? 1 : 0,
+      x: X(r.hz) + OFFSET.pair,
+      y: Y(d.ms),
+      label: `Two notes, ${r.name} (${Math.round(r.hz)} Hz), ${d.name} = ${d.ms} ms, ${cycles(r.hz, d.ms).toFixed(1)} cycles: ${heard ? 'step heard' : 'not heard, a click'}`,
+    };
+  });
+  const melody = (kind: 'change' | 'recognized'): Mark[] =>
+    MELODY_DURATIONS.map((ms) => {
+      const level = melodyLevel(MELODY_RESULTS[r.name][kind], ms);
+      return {
+        ...base,
+        kind,
+        ms,
+        level,
+        x: X(r.hz) + OFFSET[kind],
+        y: Y(ms),
+        label: `Melody, ${r.name} (${Math.round(r.hz)} Hz), ${durName(ms)} = ${ms} ms: ${kind === 'change' ? 'pitch change noticed' : 'melody recognized'} — ${LEVEL_TEXT[level]}`,
+      };
+    });
+  return [...pairs, ...melody('change'), ...melody('recognized')];
+});
+
+const COLOR: Record<Kind, string> = { pair: 'var(--c-pair)', change: 'var(--c-change)', recognized: 'var(--c-recog)' };
+const fill = (mk: Mark) => (mk.level === 1 ? COLOR[mk.kind] : mk.level === 0.5 ? `url(#half-${mk.kind})` : 'var(--c-surface)');
+const shape = (kind: Kind, x: number, y: number) => {
+  if (kind === 'pair') return { tag: 'circle', attrs: { cx: x, cy: y, r: 6.5 } };
+  if (kind === 'change') return { tag: 'polygon', attrs: { points: `${x},${y - 8} ${x + 7.5},${y + 5.5} ${x - 7.5},${y + 5.5}` } };
+  return { tag: 'polygon', attrs: { points: `${x},${y - 8} ${x + 7},${y} ${x},${y + 8} ${x - 7},${y}` } };
+};
+---
+
+<figure class="dchart" id="fig-duration">
+  <p class="d-title">Figure A · How long must a note be? My results on the slide 14 curve</p>
+  <div class="d-scroll">
+    <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-labelledby="fig-duration-desc">
+      <desc id="fig-duration-desc">
+        Frequency on a log scale from 50 Hz to 10 kHz against note duration in milliseconds. The curve shows the minimum
+        duration for a pitch sensation: about 60 ms at 50 Hz, falling to about 11 ms at 2 kHz and rising again to 26 ms at
+        10 kHz. Markers at 65, 131, 262 and 523 Hz show my two-note and melody results; each one is a button that plays it.
+      </desc>
+      <defs>
+        {
+          (['pair', 'change', 'recognized'] as Kind[]).map((k) => (
+            <linearGradient id={`half-${k}`} x1="0" x2="1" y1="0" y2="0">
+              <stop offset="50%" stop-color={COLOR[k]} />
+              <stop offset="50%" stop-color="var(--c-surface)" />
+            </linearGradient>
+          ))
+        }
+      </defs>
+
+      <!-- grid -->
+      <g class="grid">
+        {xTicks.map((f) => <line x1={X(f)} x2={X(f)} y1={PLOT_TOP} y2={PLOT_BOTTOM} />)}
+        {yTicks.map((ms) => <line x1={m.l} x2={W - m.r} y1={Y(ms)} y2={Y(ms)} />)}
+        <line x1={m.l} x2={W - m.r} y1={BAND_Y} y2={BAND_Y} />
+      </g>
+      <rect class="band" x={m.l} y={BAND_Y - 20} width={W - m.l - m.r} height="40"></rect>
+
+      <!-- the four test registers -->
+      <g class="regs">
+        {
+          REGISTERS.map((r) => (
+            <g>
+              <line x1={X(r.hz)} x2={X(r.hz)} y1={BAND_Y - 26} y2={PLOT_BOTTOM} />
+              <text x={X(r.hz)} y={BAND_Y - 32} text-anchor="middle">
+                {r.name}
+              </text>
+            </g>
+          ))
+        }
+      </g>
+
+      <path class="curve" d={curve}></path>
+      <text class="curve-label" x={X(2000)} y={Y(11) - 12} text-anchor="middle">minimum duration for pitch (slide 14)</text>
+
+      <!-- axes -->
+      <g class="axis">
+        <line x1={m.l} x2={W - m.r} y1={PLOT_BOTTOM} y2={PLOT_BOTTOM} />
+        <line x1={m.l} x2={m.l} y1={PLOT_TOP - 6} y2={PLOT_BOTTOM} />
+        <line x1={m.l} x2={m.l} y1={BAND_Y - 20} y2={BAND_Y + 20} />
+        <!-- axis break -->
+        <path class="brk" d={`M${m.l - 7},${BAND_Y + 30} l14,-6 M${m.l - 7},${BAND_Y + 38} l14,-6`}></path>
+        {xTicks.map((f) => <text x={X(f)} y={PLOT_BOTTOM + 18} text-anchor="middle">{fmtHz(f)}</text>)}
+        {yTicks.map((ms) => <text x={m.l - 8} y={Y(ms) + 4} text-anchor="end">{ms}</text>)}
+        <text x={m.l - 8} y={BAND_Y + 4} text-anchor="end">150</text>
+        <text x={(m.l + W - m.r) / 2} y={H - 18} text-anchor="middle" class="axis-title">frequency (Hz, log scale)</text>
+        <text x="16" y={(PLOT_TOP + PLOT_BOTTOM) / 2} text-anchor="middle" class="axis-title" transform={`rotate(-90 16 ${(PLOT_TOP + PLOT_BOTTOM) / 2})`}>
+          note duration (ms)
+        </text>
+      </g>
+
+      <!-- markers -->
+      <g class="marks">
+        {
+          marks.map((mk, i) => {
+            const s = shape(mk.kind, mk.x, mk.y);
+            const Tag = s.tag as 'circle' | 'polygon';
+            return (
+              <g
+                class="mk2"
+                role="button"
+                tabindex={i === 0 ? 0 : -1}
+                aria-label={mk.label}
+                data-kind={mk.kind}
+                data-hz={mk.hz}
+                data-ms={mk.ms}
+                data-label={mk.label}
+              >
+                <circle class="hit" cx={mk.x} cy={mk.y} r="11" />
+                <Tag class="shape" {...s.attrs} fill={fill(mk)} stroke={COLOR[mk.kind]} />
+              </g>
+            );
+          })
+        }
+      </g>
+    </svg>
+  </div>
+
+  <ul class="legend">
+    <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="var(--c-pair)" /></svg>Two notes: step heard</li>
+    <li><svg viewBox="0 0 16 16" aria-hidden="true"><polygon points="8,1 15,13.5 1,13.5" fill="var(--c-change)" /></svg>Melody: pitch change noticed</li>
+    <li><svg viewBox="0 0 16 16" aria-hidden="true"><polygon points="8,0.5 15,8 8,15.5 1,8" fill="var(--c-recog)" /></svg>Melody: recognized</li>
+    <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="url(#legend-half)" stroke="var(--c-ink-2)" stroke-width="1.5" /><defs><linearGradient id="legend-half"><stop offset="50%" stop-color="var(--c-ink-2)" /><stop offset="50%" stop-color="var(--c-surface)" /></linearGradient></defs></svg>Half filled = about 50%</li>
+    <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="var(--c-surface)" stroke="var(--c-ink-2)" stroke-width="1.5" /></svg>Empty = not heard / not reached</li>
+  </ul>
+  <p class="readout" aria-live="polite">Hover or focus a marker to read it; click (or Enter) to hear that exact condition.</p>
+
+  <figcaption>
+    Whole-tone (200 cent) step, sine, 5 ms ramps, 100 BPM. Frequencies assume middle C = C3. The curve is read from the
+    course slide and is approximate; the chart is my own drawing.
+  </figcaption>
+</figure>
+
+<script>
+  import { playTones } from '../../scripts/play-note';
+  import { melodyTones, pairTones } from '../../scripts/bass-tones';
+
+  const IDLE = 'Hover or focus a marker to read it; click (or Enter) to hear that exact condition.';
+  const MUTED = 'Sound is off. Turn up Vol in the sound panel (bottom-right).';
+
+  function setup(fig: HTMLElement) {
+    fig.dataset.ready = '';
+    const readout = fig.querySelector<HTMLElement>('.readout')!;
+    const marks = [...fig.querySelectorAll<SVGGElement>('.mk2')];
+    let playing: SVGGElement | null = null;
+
+    const read = (mk: SVGGElement | null) => (readout.textContent = mk ? mk.dataset.label! : IDLE);
+
+    function play(mk: SVGGElement) {
+      const hz = Number(mk.dataset.hz);
+      const ms = Number(mk.dataset.ms);
+      const tones = mk.dataset.kind === 'pair' ? pairTones(hz, ms) : melodyTones(hz, ms);
+      playing?.classList.remove('is-playing');
+      playing = mk;
+      mk.classList.add('is-playing');
+      const res = playTones(tones, { onEnd: () => mk.classList.remove('is-playing') });
+      if (!res) {
+        mk.classList.remove('is-playing');
+        readout.textContent = MUTED;
+      } else read(mk);
+    }
+
+    marks.forEach((mk, i) => {
+      mk.addEventListener('pointerenter', () => read(mk));
+      mk.addEventListener('pointerleave', () => read(fig.contains(document.activeElement) ? (document.activeElement as SVGGElement) : null));
+      mk.addEventListener('focus', () => {
+        marks.forEach((m) => m.setAttribute('tabindex', m === mk ? '0' : '-1'));
+        read(mk);
+      });
+      mk.addEventListener('click', () => play(mk));
+      mk.addEventListener('keydown', (e) => {
+        let next: SVGGElement | undefined;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          play(mk);
+          return;
+        }
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = marks[Math.min(marks.length - 1, i + 1)];
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = marks[Math.max(0, i - 1)];
+        else if (e.key === 'Home') next = marks[0];
+        else if (e.key === 'End') next = marks.at(-1);
+        else return;
+        e.preventDefault();
+        next?.focus();
+      });
+    });
+  }
+
+  const init = () => document.querySelectorAll<HTMLElement>('.dchart:not([data-ready])').forEach(setup);
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .dchart {
+    /* chart colours (validated for colour-blind separation on the dark surface) */
+    --c-surface: #111111;
+    --c-ink: #f2f2f2;
+    --c-ink-2: #cfcfcf;
+    --c-curve: #f2f2f2;
+    --c-pair: #3987e5; /* blue: two-note test */
+    --c-change: #d95926; /* orange: melody, change noticed */
+    --c-recog: #199e70; /* aqua: melody recognized */
+    margin: 2.25rem 0;
+    font-size: 0.85rem;
+    text-shadow: none;
+  }
+  .d-title {
+    margin: 0 0 0.6rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .d-scroll {
+    overflow-x: auto;
+    background: var(--c-surface);
+    border: 1px solid var(--border-strong);
+  }
+  svg {
+    display: block;
+    width: 100%;
+    min-width: 560px;
+    height: auto;
+  }
+  .grid line {
+    stroke: rgba(255, 255, 255, 0.1);
+  }
+  .band {
+    fill: rgba(255, 255, 255, 0.04);
+  }
+  .regs line {
+    stroke: rgba(255, 255, 255, 0.28);
+    stroke-dasharray: 3 4;
+  }
+  .regs text {
+    fill: var(--c-ink);
+    font-weight: 600;
+  }
+  .curve {
+    fill: none;
+    stroke: var(--c-curve);
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+  }
+  text {
+    fill: var(--c-ink-2);
+    font-size: 13px;
+    font-family: var(--font-sans);
+  }
+  .curve-label {
+    fill: var(--c-ink);
+    font-weight: 600;
+  }
+  .axis line,
+  .brk {
+    stroke: rgba(255, 255, 255, 0.45);
+    fill: none;
+  }
+  .brk {
+    stroke-width: 2;
+  }
+  .axis-title {
+    font-size: 12.5px;
+  }
+  .mk2 {
+    cursor: pointer;
+    outline: none;
+  }
+  .hit {
+    fill: transparent;
+  }
+  .shape {
+    stroke-width: 2;
+    transition: transform 0.15s;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .mk2:hover .shape,
+  .mk2.is-playing .shape {
+    transform: scale(1.35);
+  }
+  .mk2:focus-visible .hit {
+    fill: none;
+    stroke: var(--c-ink);
+    stroke-width: 2;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1rem;
+    list-style: none;
+    margin: 0.6rem 0 0;
+    padding: 0;
+    color: var(--c-ink-2);
+  }
+  .legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+  }
+  .legend svg {
+    width: 14px;
+    height: 14px;
+    min-width: 0;
+  }
+  .readout {
+    margin: 0.5rem 0 0;
+    padding: 0.45rem 0.65rem;
+    min-height: 2.6em;
+    background: var(--c-surface);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--c-ink);
+  }
+  figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--c-ink-2);
+  }
+</style>

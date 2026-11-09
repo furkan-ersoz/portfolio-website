@@ -1,0 +1,246 @@
+---
+// Figure B — "hear it yourself": every two-note condition from the test as a button.
+// Optional blind mode: the second note goes up or down at random and you guess.
+import { DURATIONS, REGISTERS, cycles } from '../../lib/bass';
+---
+
+<figure class="hgrid">
+  <p class="h-title">Figure B · Hear it yourself: two notes, a whole tone apart</p>
+
+  <label class="h-blind">
+    <input type="checkbox" />
+    Test myself: the second note goes up <em>or</em> down at random
+  </label>
+
+  <div class="h-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Register</th>
+          {DURATIONS.map((d) => <th scope="col">{d.name}<span>{d.ms} ms</span></th>)}
+        </tr>
+      </thead>
+      <tbody>
+        {
+          REGISTERS.map((r) => (
+            <tr>
+              <th scope="row">
+                {r.name}
+                <span>{Math.round(r.hz)} Hz</span>
+              </th>
+              {DURATIONS.map((d) => (
+                <td>
+                  <button
+                    type="button"
+                    data-hz={r.hz}
+                    data-ms={d.ms}
+                    aria-label={`Play ${r.name}, ${d.ms} ms, ${cycles(r.hz, d.ms).toFixed(1)} cycles`}
+                  >
+                    ▶ <span>{cycles(r.hz, d.ms).toFixed(1)} cyc</span>
+                  </button>
+                </td>
+              ))}
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="h-quiz" hidden>
+    <p class="h-q">Did the second note go up or down?</p>
+    <div class="h-answers">
+      <button type="button" class="button" data-answer="1">↑ Up</button>
+      <button type="button" class="button" data-answer="-1">↓ Down</button>
+      <button type="button" class="button" data-answer="0">Couldn't tell</button>
+    </div>
+  </div>
+  <p class="h-status" aria-live="polite"></p>
+
+  <figcaption>
+    Each button plays the note, then one beat later (600 ms) the note a whole tone higher, both at the given length with
+    5 ms ramps. "cyc" is how many wave cycles fit into the note. Headphones or good speakers help in the bottom rows.
+  </figcaption>
+</figure>
+
+<script>
+  import { playTones } from '../../scripts/play-note';
+  import { pairTones } from '../../scripts/bass-tones';
+
+  function setup(fig: HTMLElement) {
+    fig.dataset.ready = '';
+    const blind = fig.querySelector<HTMLInputElement>('.h-blind input')!;
+    const quiz = fig.querySelector<HTMLElement>('.h-quiz')!;
+    const status = fig.querySelector<HTMLElement>('.h-status')!;
+    let pending: { dir: 1 | -1; cell: HTMLButtonElement } | null = null;
+    let right = 0;
+    let total = 0;
+
+    const score = () => (total ? ` Score: ${right} of ${total}.` : '');
+
+    blind.addEventListener('change', () => {
+      pending = null;
+      quiz.hidden = true;
+      right = total = 0;
+      status.textContent = blind.checked ? 'Blind mode on: click any cell, then answer.' : '';
+    });
+
+    fig.querySelectorAll<HTMLButtonElement>('td button').forEach((cell) =>
+      cell.addEventListener('click', () => {
+        const dir: 1 | -1 = blind.checked ? (Math.random() < 0.5 ? 1 : -1) : 1;
+        fig.querySelectorAll('td button').forEach((b) => b.removeAttribute('data-playing'));
+        cell.setAttribute('data-playing', '');
+        const res = playTones(pairTones(Number(cell.dataset.hz), Number(cell.dataset.ms), dir), {
+          onEnd: () => cell.removeAttribute('data-playing'),
+        });
+        if (!res) {
+          cell.removeAttribute('data-playing');
+          status.textContent = 'Sound is off. Turn up Vol in the sound panel (bottom-right).';
+          return;
+        }
+        if (blind.checked) {
+          pending = { dir, cell };
+          quiz.hidden = false;
+          status.textContent = score().trim();
+        }
+      }),
+    );
+
+    fig.querySelectorAll<HTMLButtonElement>('[data-answer]').forEach((btn) =>
+      btn.addEventListener('click', () => {
+        if (!pending) return;
+        const answer = Number(btn.dataset.answer);
+        total++;
+        if (answer === pending.dir) right++;
+        const truth = pending.dir === 1 ? 'up' : 'down';
+        status.textContent =
+          (answer === pending.dir ? 'Right' : answer === 0 ? 'No guess' : 'Not this time') +
+          `: it went ${truth}.` +
+          score();
+        pending.cell.focus();
+        pending = null;
+        quiz.hidden = true;
+      }),
+    );
+  }
+
+  const init = () => document.querySelectorAll<HTMLElement>('.hgrid:not([data-ready])').forEach(setup);
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .hgrid {
+    --c-surface: #111111;
+    --c-ink: #f2f2f2;
+    --c-ink-2: #cfcfcf;
+    --c-play: #3987e5;
+    margin: 2.25rem 0;
+    padding: 1rem;
+    background: var(--c-surface);
+    border: 1px solid var(--border-strong);
+    font-size: 0.9rem;
+    text-shadow: none;
+  }
+  .h-title {
+    margin: 0 0 0.6rem;
+    font-weight: 600;
+  }
+  .h-blind {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    color: var(--c-ink);
+  }
+  .h-blind input {
+    accent-color: var(--c-play);
+    width: 1.05em;
+    height: 1.05em;
+    margin: 0;
+  }
+  .h-scroll {
+    overflow-x: auto;
+  }
+  .hgrid table {
+    display: table;
+    width: 100%;
+    min-width: 340px;
+    margin: 0;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  .hgrid th,
+  .hgrid td {
+    padding: 0.3rem;
+    border: 0;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .hgrid th {
+    color: var(--c-ink);
+    font-weight: 600;
+  }
+  .hgrid th span {
+    display: block;
+    font-weight: 400;
+    font-size: 0.75rem;
+    color: var(--c-ink-2);
+  }
+  .hgrid tbody th {
+    text-align: left;
+  }
+  .hgrid td button {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.3rem;
+    font: inherit;
+    color: var(--c-ink);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    cursor: pointer;
+  }
+  .hgrid td button span {
+    font-size: 0.75rem;
+    color: var(--c-ink-2);
+  }
+  .hgrid td button:hover {
+    border-color: var(--c-ink);
+  }
+  .hgrid td button[data-playing] {
+    border-color: var(--c-play);
+    background: rgba(57, 135, 229, 0.25);
+  }
+  .h-quiz {
+    margin-top: 0.75rem;
+  }
+  .h-q {
+    margin: 0 0 0.4rem;
+    font-weight: 600;
+  }
+  .h-answers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .h-answers .button {
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--c-ink);
+    cursor: pointer;
+    padding: 0.45em 0.8em;
+  }
+  .h-status {
+    margin: 0.6rem 0 0;
+    color: var(--c-ink);
+    font-weight: 600;
+  }
+  .h-status:empty {
+    display: none;
+  }
+  figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--c-ink-2);
+  }
+</style>

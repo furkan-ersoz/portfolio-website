@@ -45,16 +45,47 @@ const about = defineCollection({
 
 // Blog posts: one .md/.mdx file per post in src/content/blog/. The file name is the URL (/blog/<file-name>).
 // `draft: true` keeps a post out of the built site (it still shows while running `npm run dev`).
+// Like projects, a post can be shown on the homepage with `featured: true` (+ `order`).
 const blog = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog' }),
-  schema: z.object({
-    title: z.string(),
-    date: z.coerce.date(),
-    updated: z.coerce.date().optional(),
-    summary: z.string(), // one line, shown on /blog and in search results
-    tags: z.array(z.string()).default([]),
-    draft: z.boolean().default(false),
-  }),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      date: z.coerce.date(),
+      updated: z.coerce.date().optional(),
+      summary: z.string(), // one line, shown in search results and under the title
+      cover: image(),
+      coverAlt: z.string().optional(),
+      category: z.string().default('Blog'),
+      tags: z.array(z.string()).default([]),
+      draft: z.boolean().default(false),
+      featured: z.boolean().default(false),
+      order: z.number().optional(),
+      // Optional series, e.g. series: 'Notes from MPC', part: 2 (shown above the title)
+      series: z.string().optional(),
+      part: z.number().optional(),
+    }),
+});
+
+// Music releases: one .mdx file per release in src/content/music/ (same fields as a project).
+// They get a page at /music/<file-name>, show on the Listen page and, with `featured: true`, on the homepage.
+const music = defineCollection({
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/music' }),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      date: z.coerce.date(),
+      dateLabel: z.string().optional(),
+      category: z.string().default('Music'),
+      summary: z.string(),
+      cover: image(),
+      coverAlt: z.string().optional(),
+      tags: z.array(z.string()).default([]),
+      status: z.string().optional(),
+      links: z.array(link).default([]),
+      featured: z.boolean().default(false),
+      order: z.number().optional(),
+    }),
 });
 
 // ─── Adding more collections later (e.g. concerts, posts) ───
@@ -63,4 +94,4 @@ const blog = defineCollection({
 // 2. Add it to the export below.
 // 3. Register it in src/lib/selected.ts so featured items show on the homepage.
 
-export const collections = { projects, about, blog };
+export const collections = { projects, about, blog, music };

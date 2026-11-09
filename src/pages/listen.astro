@@ -2,7 +2,12 @@
 // Listen page. Streaming platforms are set in src/site.config.ts
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SocialIcon from '../components/SocialIcon.astro';
+import CardList from '../components/CardList.astro';
 import { listen } from '../site.config';
+import { getSortedMusic, musicToCard } from '../lib/selected';
+
+// Releases from src/content/music/ (none yet → this section stays hidden)
+const releases = (await getSortedMusic()).map(musicToCard);
 
 const isTodo = (url: string) => !url || url.trim().toUpperCase().startsWith('TODO');
 ---
@@ -32,9 +37,29 @@ const isTodo = (url: string) => !url || url.trim().toUpperCase().startsWith('TOD
       ))
     }
   </ul>
+
+  {
+    releases.length > 0 && (
+      <section class="releases" aria-labelledby="releases-title">
+        <h2 id="releases-title">Releases</h2>
+        <CardList items={releases} />
+      </section>
+    )
+  }
 </BaseLayout>
 
 <style>
+  .releases {
+    margin-top: clamp(2.5rem, 7vw, 4rem);
+  }
+  .releases h2 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
   .intro {
     margin: 0 0 1.5rem;
   }

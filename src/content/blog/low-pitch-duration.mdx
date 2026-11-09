@@ -1,0 +1,92 @@
+---
+title: 'Pitch Detection and Melody Perception at Low Frequencies by Duration'
+date: 2026-11-09
+summary: How long does a bass note have to be before you hear its pitch, and before a fast bass melody comes through? A small, informal listening test with sine tones from 65 to 523 Hz.
+tags: [Pitch Perception, Bass, Production, MIR]
+cover: ./low-pitch-duration.svg
+coverAlt: Four rows of short sine-wave bursts of the same length, from high to low register; the low rows hold only a couple of wave cycles
+series: Notes from MPC
+part: 2
+---
+
+import DurationChart from '../../components/blog/DurationChart.astro';
+import HearGrid from '../../components/blog/HearGrid.astro';
+
+In [my first post](/blog/makam-pitches) I compared one comma, the smallest step in Turkish makam music, with the ear's *just noticeable difference* (JND): the smallest pitch change we can hear. The JND depends on frequency, and in the bass a comma falls under it. But those numbers come from long, steady tones in a lab. Real music is made of short notes, often in fast passages.
+
+Our music perception course (MPC) had a slide on exactly this: pitch perception also depends on the sound's *duration*. A tone that is too short isn't heard as a pitch at all. The slide asked whether what counts is a minimum number of *cycles* (complete repetitions of the waveform) or a minimum time, and the answer was: both.
+
+So my question was: **do we perceive fast note changes less clearly at low frequencies than at high ones, not only between two notes but in an actual melody?** The practical reason is simple. I write bass lines, and I want to know where a fast bass part stops sounding like notes and starts sounding like thumps.
+
+A note on units: a *cent* is 1/100 of a semitone. All steps in this test were a whole tone, 200 cents, which is a big step by these standards.
+
+## How I tested
+
+- I wrote the notes as MIDI in Cubase and played them with FabFilter Twin 3, stripped down to one sine oscillator: filter, effects and modulation off, same velocity everywhere.
+- Attack and release were 5 ms. Shorter values clicked. My first settings (80 ms attack, 117 ms release) were much worse: they stretched the short notes and smeared them into each other. If you repeat this, check your envelope first.
+- The tempo was 100 BPM, so a 1/128 note lasts 18.75 ms, 1/64 lasts 37.5 ms, 1/32 lasts 75 ms and 1/16 lasts 150 ms.
+- I tested four registers. Cubase calls middle C "C3", so here C1 ≈ 65 Hz, C2 ≈ 131 Hz, C3 ≈ 262 Hz and C4 ≈ 523 Hz.
+- In the two-note test the notes came one beat (600 ms) apart.
+
+To be plain about it: there was one listener (me), the test was not blind and the order was not randomised. Read the results as careful notes, not as a study.
+
+## Test 1: two notes
+
+The second note was always a whole tone higher. In brackets: how many wave cycles fit into the note.
+
+| Note (Cubase) | Frequency | 1/128 (18.75 ms) | 1/64 (37.5 ms) | 1/32 (75 ms) | 1/16 (150 ms) |
+|---|---|---|---|---|---|
+| C4 | 523 Hz | Heard (9.8) | Heard (19.6) | Heard (39) | Heard (78) |
+| C3 | 262 Hz | Heard (4.9) | Heard (9.8) | Heard (19.6) | Heard (39) |
+| C2 | 131 Hz | Not heard, "click" (2.5) | Not heard, "click" (4.9) | Heard (9.8) | Heard (19.6) |
+| C1 | 65 Hz | Not heard, "click" (1.2) | Not heard, "click" (2.5) | Heard (4.9) | Heard (9.8) |
+
+## Test 2: a melody
+
+Then I played a short melody (C D E♭ C D E♭ F E♭ D C D C B C) at 1/64, 1/32 and 1/16 in the same four octaves (I didn't test 1/128 here). I listened for two things: is any pitch change noticed at all, and is the melody recognized? The percentages are my own estimates while listening, not counted answers.
+
+| Note (Cubase) | Frequency | Pitch change first noticed | Melody first recognized |
+|---|---|---|---|
+| C4 | 523 Hz | 1/64 (37.5 ms): 100% | 1/32 (75 ms): 100% |
+| C3 | 262 Hz | 1/64 (37.5 ms): 100% | 1/32 (75 ms): 100% |
+| C2 | 131 Hz | 1/64 (37.5 ms): 100% | 1/16 (150 ms): 100% |
+| C1 | 65 Hz | 1/32 (75 ms): 50% | 1/16 (150 ms): 50% |
+
+## Against the textbook curve
+
+The course slide shows the minimum duration needed for a pitch sensation, across frequency. Here are my results drawn on top of that curve (my own chart, values read from the slide). Every marker plays its condition.
+
+<DurationChart />
+
+| Note | Curve minimum (approx.) | My two-note result | Match |
+|---|---|---|---|
+| C1 (65 Hz) | ≈ 48 ms | 37.5 ms not heard, 75 ms heard | Consistent |
+| C2 (131 Hz) | ≈ 31 ms | 37.5 ms not heard, 75 ms heard | I needed longer |
+| C3 (262 Hz) | ≈ 20 ms | 18.75 ms heard | Consistent (borderline) |
+| C4 (523 Hz) | ≈ 15 ms | 18.75 ms heard | Consistent |
+
+C2 is the odd one out. A few likely reasons: the 5 ms ramps shorten a short note further, low frequencies sound quieter at the same level, and speakers reproduce bass weakly. And the curve is for single tones: recognizing the melody needed far longer, 150 ms at C2, about five times the curve.
+
+## What I noticed
+
+- At low frequencies, short notes were heard as a click rather than a tone.
+- Noticing a change is easier than recognizing a melody: the melody needed longer notes in every octave.
+- Neither duration alone nor cycle count alone explains it. 18.75 ms was enough at C4 but not at C1 or C2, and 4.9 cycles was enough at C1 but not at C2. That fits the slide's answer: both matter.
+- For bass lines: at about 131 Hz and below, the melody needed about 150 ms per note (a 1/16 at 100 BPM) to come through clearly in this test.
+
+<HearGrid />
+
+## Limitations
+
+- One listener, not blind, fixed order, and a large interval (200 cents). Smaller intervals, like one comma (22.6 cents, see [the first post](/blog/makam-pitches)), would need longer notes.
+- Durations double at each step, so the real thresholds lie somewhere in between.
+- 5 ms ramps leave only about 9 ms at full level in an 18.75 ms note; low frequencies are perceived as quieter; the playback system matters.
+- The melody percentages are estimates, not counted answers.
+
+## Sources
+
+<ol class="sources">
+  <li>MPC course slides, "Psychophysics of the basic sound dimensions: Pitch" (2026), slides 11, 12, 14 and 15.</li>
+  <li>Moore, B. C. J. (1973). Frequency difference limens for short-duration tones. <em>Journal of the Acoustical Society of America</em>.</li>
+  <li>Part 1 of this series: <a href="/blog/makam-pitches">Makam Pitches: Theory, Practice and the Ear</a>.</li>
+</ol>

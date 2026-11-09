@@ -39,21 +39,21 @@ interface Props {
 const { id, title, rows, minWidth = 960, legend = [] } = Astro.props;
 
 const PAD = 38; // px left/right of the scale (room for the end labels)
-const LANE = 14; // px per label lane
+const LANE = 16; // px per label lane
 const MAX_LANES = 3;
 
 const xLog = (c: number) => c / 1200;
 const xLin = (c: number) => (hz(c) - BASE_HZ) / BASE_HZ;
 
 // Rough label width (11px system font) for the lane layout.
-const textWidth = (s: string, size = 11) => s.length * size * 0.6 + 6;
+const textWidth = (s: string, size = 12) => s.length * size * 0.6 + 6;
 
 // Greedy lane assignment so labels don't overlap at the plot's minimum width.
 function lanes(markers: RulerMarker[], x: (c: number) => number): number[] {
   const scale = minWidth - 2 * PAD;
   const ends: number[] = [];
   return markers.map((m) => {
-    const w = Math.max(textWidth(m.label), m.tag ? textWidth(m.tag, 9.5) : 0);
+    const w = Math.max(textWidth(m.label), m.tag ? textWidth(m.tag, 10) : 0);
     const left = x(m.cents) * scale - w / 2;
     const span = m.tag ? 2 : 1; // a tag sits one lane above its label
     let lane = 0;
@@ -332,13 +332,19 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
 
 <style>
   .ruler {
-    --fig-accent: #ff5a3c;
+    /* chart colours (validated for colour-blind separation on the dark surface) */
+    --c-surface: #111111;
+    --c-ink: #f2f2f2;
+    --c-ink-2: #cfcfcf;
+    --c-accent: #d95926; /* orange: not in AEU */
+    --c-hl: #3987e5; /* blue: highlight line */
     --half: min(540px, calc(50vw - var(--gutter)));
     position: relative;
     /* wider than the text column on computers, full width on phones */
     margin: 2.25rem calc(50% - var(--half));
     font-size: 0.85rem;
     line-height: 1.4;
+    text-shadow: none;
   }
 
   .r-head {
@@ -385,8 +391,8 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
   .r-scroll {
     overflow-x: auto;
     overscroll-behavior-x: contain;
-    background: rgba(0, 0, 0, 0.78);
-    border: 1px solid var(--border);
+    background: var(--c-surface);
+    border: 1px solid var(--border-strong);
   }
   .r-plot {
     position: relative;
@@ -412,17 +418,18 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
     transition: left 0.35s var(--ease);
   }
   .r-guide {
-    border-left: 1px dashed rgba(255, 255, 255, 0.14);
+    border-left: 1px dashed rgba(255, 255, 255, 0.22);
   }
   .r-hl {
-    border-left: 1px solid rgba(255, 255, 255, 0.7);
+    border-left: 2px solid var(--c-hl);
+    margin-left: -1px;
     transition: none;
   }
 
   .r-row {
     position: relative;
     padding-top: 0.35rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
   .r-name {
     position: sticky;
@@ -430,14 +437,16 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
     display: inline-block;
     margin: 0;
     padding: 0 0.6rem;
-    font-size: 0.7rem;
+    font-size: 0.74rem;
     font-weight: 600;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: var(--text-muted);
+    color: var(--c-ink);
+    background: var(--c-surface);
     white-space: nowrap;
   }
   .r-sub {
+    color: var(--c-ink-2);
     font-weight: 400;
     text-transform: none;
     letter-spacing: 0;
@@ -445,7 +454,7 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
   .r-track {
     position: relative;
     margin-inline: var(--pad);
-    height: calc(var(--lanes) * var(--lane) + 22px + var(--nh));
+    height: calc(var(--lanes) * var(--lane) + 24px + var(--nh));
   }
   .r-line {
     position: absolute;
@@ -467,7 +476,7 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
     appearance: none;
     background: none;
     border: 0;
-    color: var(--text);
+    color: var(--c-ink);
     font: inherit;
     cursor: pointer;
     transition: left 0.35s var(--ease);
@@ -477,11 +486,11 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
     position: absolute;
     left: 50%;
     bottom: calc(5px + var(--nh));
-    width: 9px;
-    height: 9px;
-    margin-left: -4.5px;
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
     border-radius: 50%;
-    background: var(--text);
+    background: var(--c-ink);
     transition: transform 0.15s;
   }
   .mk-label,
@@ -494,32 +503,31 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
     pointer-events: none;
   }
   .mk-label {
-    bottom: calc(17px + var(--nh) + var(--ll) * var(--lane));
-    font-size: 11px;
+    bottom: calc(18px + var(--nh) + var(--ll) * var(--lane));
+    font-size: 12px;
     line-height: var(--lane);
     transition: bottom 0.35s var(--ease);
   }
   .mk-tag {
-    bottom: calc(17px + var(--nh) + (var(--ll) + 1) * var(--lane));
-    font-size: 9.5px;
+    bottom: calc(18px + var(--nh) + (var(--ll) + 1) * var(--lane));
+    font-size: 10px;
+    font-weight: 700;
     line-height: var(--lane);
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--fig-accent);
+    color: var(--c-ink-2);
     transition: bottom 0.35s var(--ease);
   }
   .mk-note {
     bottom: 0;
-    font-size: 10px;
+    font-size: 11px;
     line-height: 14px;
-    color: var(--text-muted);
+    color: var(--c-ink-2);
   }
 
   .t-accent .mk-dot {
-    background: var(--fig-accent);
-  }
-  .t-accent .mk-label {
-    color: var(--fig-accent);
+    background: var(--c-accent);
+    box-shadow: 0 0 0 1.5px var(--c-surface);
   }
   .t-minor .mk-dot {
     width: 1px;
@@ -527,10 +535,10 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
     margin-left: -0.5px;
     bottom: calc(4px + var(--nh));
     border-radius: 0;
-    background: var(--text-muted);
+    background: #8f8f8f;
   }
   .t-minor .mk-label {
-    color: var(--text-muted);
+    color: #9e9e9e;
   }
 
   .mk:hover .mk-dot,
@@ -539,15 +547,15 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
   }
   .mk.is-playing .mk-dot {
     transform: scale(1.8);
-    box-shadow: 0 0 10px currentColor;
+    box-shadow: 0 0 0 3px var(--c-hl);
   }
   .mk:focus-visible {
     outline: none;
   }
   .mk:focus-visible .mk-dot {
     box-shadow:
-      0 0 0 2px #000,
-      0 0 0 4px var(--text);
+      0 0 0 2px var(--c-surface),
+      0 0 0 4px var(--c-hl);
   }
   .mk:focus-visible .mk-label {
     text-decoration: underline;
@@ -562,10 +570,10 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
     left: calc(var(--xn) * 100%);
   }
   .is-lin .mk-label {
-    bottom: calc(17px + var(--nh) + var(--ln) * var(--lane));
+    bottom: calc(18px + var(--nh) + var(--ln) * var(--lane));
   }
   .is-lin .mk-tag {
-    bottom: calc(17px + var(--nh) + (var(--ln) + 1) * var(--lane));
+    bottom: calc(18px + var(--nh) + (var(--ln) + 1) * var(--lane));
   }
 
   /* ── axis ── */
@@ -573,8 +581,8 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
     position: relative;
     margin-inline: var(--pad);
     height: 2rem;
-    font-size: 10.5px;
-    color: var(--text-muted);
+    font-size: 11.5px;
+    color: var(--c-ink-2);
   }
   .r-tick {
     position: absolute;
@@ -601,7 +609,7 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
   /* ── footer ── */
   .r-foot {
     margin-top: 0.6rem;
-    color: var(--text-muted);
+    color: var(--c-ink-2);
     font-size: 0.8rem;
   }
   .r-legend {
@@ -618,26 +626,26 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
     gap: 0.4rem;
   }
   .r-swatch {
-    width: 9px;
-    height: 9px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    background: var(--text);
+    background: var(--c-ink);
   }
   .r-swatch.t-accent {
-    background: var(--fig-accent);
+    background: var(--c-accent);
   }
   .r-swatch.t-minor {
     width: 1px;
     height: 11px;
     border-radius: 0;
-    background: var(--text-muted);
+    background: #8f8f8f;
   }
   .r-swatch-guide {
     width: 0;
     height: 12px;
     border-radius: 0;
     background: none;
-    border-left: 1px dashed var(--text-muted);
+    border-left: 1px dashed var(--c-ink-2);
   }
   .r-hint,
   .r-status {
@@ -647,12 +655,13 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
     display: none;
   }
   .r-status {
-    color: var(--fig-accent);
+    color: var(--c-ink);
+    font-weight: 600;
   }
   figcaption {
     margin-top: 0.5rem;
     font-size: 0.85rem;
-    color: var(--text-muted);
+    color: var(--c-ink-2);
   }
   figcaption :global(p) {
     margin: 0;
@@ -662,11 +671,12 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
   .r-tip {
     position: absolute;
     z-index: 5;
-    max-width: min(320px, 90%);
-    padding: 0.45rem 0.65rem;
-    background: #000;
-    border: 1px solid var(--border-strong);
-    font-size: 0.78rem;
+    max-width: min(340px, 90%);
+    padding: 0.5rem 0.7rem;
+    background: #1c1c1c;
+    border: 1px solid #5a5a5a;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+    font-size: 0.82rem;
     line-height: 1.45;
     pointer-events: none;
     text-shadow: none;
@@ -676,6 +686,6 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
     display: block;
   }
   .r-tip :global(span) {
-    color: var(--text-muted);
+    color: var(--c-ink-2);
   }
 </style>

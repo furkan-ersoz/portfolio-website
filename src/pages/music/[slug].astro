@@ -1,0 +1,26 @@
+---
+// Every music release page (/music/<file-name>), same template as the projects.
+import { render } from 'astro:content';
+import EntryLayout from '../../layouts/EntryLayout.astro';
+import Audio from '../../components/Audio.astro';
+import Video from '../../components/Video.astro';
+import YouTube from '../../components/YouTube.astro';
+import { getSortedMusic } from '../../lib/selected';
+import { withBase } from '../../lib/url';
+
+export async function getStaticPaths() {
+  const releases = await getSortedMusic(); // newest first
+  const link = (e?: (typeof releases)[number]) => e && { href: withBase(`/music/${e.id}`), title: e.data.title };
+  return releases.map((entry, i) => ({
+    params: { slug: entry.id },
+    props: { entry, prev: link(releases[i - 1]), next: link(releases[i + 1]) },
+  }));
+}
+
+const { entry, prev, next } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<EntryLayout data={entry.data} back={{ href: withBase('/listen'), label: 'Listen' }} prev={prev} next={next} pagerLabel="More music">
+  <Content components={{ Audio, Video, YouTube }} />
+</EntryLayout>

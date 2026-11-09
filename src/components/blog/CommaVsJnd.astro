@@ -66,7 +66,7 @@ const yTicks = [0, 5, 10, 15, 20, 25, 30];
         <text x={X(cross) + 8} y={Y(27.5)} class="t-band">← below ≈{Math.round(cross)} Hz, one comma is under the JND</text>
         <text x={X(fTop) + 6} y={Y(D_MAX) + 14} class="t-comma">one comma ↑ (52.7 Hz at 4 kHz)</text>
         <text x={X(3850)} y={Y(25.5)} text-anchor="end" class="t-jnd">JND (course slide 11)</text>
-        <text x={X(4980)} y={Y(13.5)} text-anchor="end" class="t-wier">JND (Wier et al. 1977)</text>
+        <text x={X(4980)} y={Y(12.5)} text-anchor="end" class="t-wier">JND (Wier et al. 1977)</text>
       </g>
 
       <!-- axes -->
@@ -82,6 +82,13 @@ const yTicks = [0, 5, 10, 15, 20, 25, 30];
       </g>
     </svg>
   </div>
+
+  <ul class="legend">
+    <li><span class="key key-comma" aria-hidden="true"></span>One comma (1.32% of f)</li>
+    <li><span class="key key-jnd" aria-hidden="true"></span>JND, course slide 11</li>
+    <li><span class="key key-wier" aria-hidden="true"></span>JND, Wier et al. (1977)</li>
+    <li><span class="key key-band" aria-hidden="true"></span>One comma below the JND</li>
+  </ul>
 
   <div class="demo">
     <span class="demo-label">Hear one comma (f, then f · 2<sup>1/53</sup>):</span>
@@ -140,9 +147,16 @@ const yTicks = [0, 5, 10, 15, 20, 25, 30];
 
 <style>
   .jnd {
-    --fig-accent: #ff5a3c;
+    /* chart colours (validated for colour-blind separation on the dark surface) */
+    --c-surface: #111111;
+    --c-ink: #f2f2f2;
+    --c-ink-2: #cfcfcf;
+    --c-jnd: #3987e5; /* blue: JND, course slide 11 */
+    --c-wier: #199e70; /* aqua: JND, Wier et al. */
+    --c-comma: #d95926; /* orange: one comma */
     margin: 2.25rem 0;
     font-size: 0.85rem;
+    text-shadow: none;
   }
   .jnd-title {
     margin: 0 0 0.6rem;
@@ -151,70 +165,102 @@ const yTicks = [0, 5, 10, 15, 20, 25, 30];
   }
   .jnd-scroll {
     overflow-x: auto;
-    background: rgba(0, 0, 0, 0.78);
-    border: 1px solid var(--border);
+    background: var(--c-surface);
+    border: 1px solid var(--border-strong);
   }
   svg {
     display: block;
     width: 100%;
     min-width: 540px;
     height: auto;
-    text-shadow: none;
   }
   .grid line {
-    stroke: rgba(255, 255, 255, 0.07);
+    stroke: rgba(255, 255, 255, 0.1);
   }
   .band {
-    fill: var(--fig-accent);
-    opacity: 0.22;
+    fill: var(--c-comma);
+    opacity: 0.18;
   }
   path {
     fill: none;
-    stroke-width: 2;
+    stroke-width: 2.5;
+    stroke-linejoin: round;
   }
   .l-jnd {
-    stroke: var(--text);
+    stroke: var(--c-jnd);
   }
   .l-wier {
-    stroke: var(--text-muted);
-    stroke-dasharray: 5 4;
+    stroke: var(--c-wier);
+    stroke-dasharray: 6 4;
   }
   .l-comma {
-    stroke: var(--fig-accent);
+    stroke: var(--c-comma);
   }
   .cross {
-    fill: var(--text);
+    fill: var(--c-ink);
+    stroke: var(--c-surface);
+    stroke-width: 2;
   }
   .demo-dot {
-    fill: #000;
-    stroke: var(--fig-accent);
-    stroke-width: 1.5;
+    fill: var(--c-surface);
+    stroke: var(--c-comma);
+    stroke-width: 2;
     transition: r 0.15s;
   }
   .demo-dot.is-playing {
-    fill: var(--fig-accent);
-    r: 6;
+    fill: var(--c-comma);
+    r: 7;
   }
   text {
-    fill: var(--text-muted);
-    font-size: 12px;
+    fill: var(--c-ink-2);
+    font-size: 13px;
     font-family: var(--font-sans);
   }
-  .t-comma {
-    fill: var(--fig-accent);
-  }
-  .t-jnd {
-    fill: var(--text);
-  }
-  .t-band {
-    fill: var(--text);
-    font-size: 11.5px;
+  .labels text {
+    fill: var(--c-ink);
+    font-weight: 600;
   }
   .axis line {
-    stroke: var(--border-strong);
+    stroke: rgba(255, 255, 255, 0.45);
   }
   .axis-title {
-    font-size: 11.5px;
+    font-size: 12.5px;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1.1rem;
+    list-style: none;
+    margin: 0.6rem 0 0;
+    padding: 0;
+    color: var(--c-ink-2);
+  }
+  .legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .key {
+    width: 22px;
+    height: 0;
+    border-top: 3px solid;
+  }
+  .key-jnd {
+    border-color: var(--c-jnd);
+  }
+  .key-wier {
+    border-top-style: dashed;
+    border-color: var(--c-wier);
+  }
+  .key-comma {
+    border-color: var(--c-comma);
+  }
+  .key-band {
+    height: 12px;
+    border: 0;
+    background: var(--c-comma);
+    opacity: 0.35;
   }
 
   .demo {
@@ -226,7 +272,7 @@ const yTicks = [0, 5, 10, 15, 20, 25, 30];
   }
   .demo-label {
     width: 100%;
-    color: var(--text-muted);
+    color: var(--c-ink-2);
   }
   .demo-btn {
     font: inherit;
@@ -235,13 +281,18 @@ const yTicks = [0, 5, 10, 15, 20, 25, 30];
     cursor: pointer;
     padding: 0.45em 0.8em;
   }
+  .demo-btn .muted {
+    color: var(--c-ink-2);
+  }
   .demo-btn[data-playing] {
-    border-color: var(--fig-accent);
+    border-color: var(--c-comma);
+    background: rgba(217, 89, 38, 0.18);
   }
   .demo-status {
     width: 100%;
     margin: 0;
-    color: var(--fig-accent);
+    color: var(--c-ink);
+    font-weight: 600;
   }
   .demo-status:empty {
     display: none;
@@ -249,7 +300,7 @@ const yTicks = [0, 5, 10, 15, 20, 25, 30];
   figcaption {
     margin-top: 0.6rem;
     font-size: 0.85rem;
-    color: var(--text-muted);
+    color: var(--c-ink-2);
   }
   figcaption :global(p) {
     margin: 0;

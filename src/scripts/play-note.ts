@@ -3,6 +3,8 @@
 //
 //   playNote(freqHz, durationMs = 600)        one note, right now
 //   playSequence(notes, { onStep, onEnd })    notes one after another (returns stop())
+//   playTones(tones, { onStep, onEnd })       exact-length test tones (sine, 5 ms ramps by default),
+//                                             each at its own onset; for listening experiments
 //
 // Sound only ever starts inside a click / key press (these functions are only
 // called from event handlers), so nothing plays before the visitor's first interaction.
@@ -145,4 +147,90 @@ export function playSequence(
   }
   stopCurrent = stop;
   return stop;
+}
+
+// ── Exact test tones ─────────────────────────────────────────
+// Durations are scheduled on the audio clock (sample-accurate), not rounded to animation frames.
+
+export interface Tone {
+  freqHz: number;
+  durationMs: number;
+  onsetMs: number; // from the start of the sequence
+  attackMs?: number; // default 5
+  releaseMs?: number; // default 5
+  wave?: OscillatorType; // default 'sine'
+}
+
+export interface ScheduledTone {
+  freqHz: number;
+  start: number; // AudioContext time, s
+  stop: number;
+}
+
+function scheduleTone(c: AudioContext, dest: AudioNode, t: Tone, start: number, peak: number): ScheduledTone {
+  const dur = t.durationMs / 1000;
+  const attack = Math.min((t.attackMs ?? 5) / 1000, dur / 2);
+  const release = Math.min((t.releaseMs ?? 5) / 1000, dur / 2);
+  const stop = start + dur;
+  const osc = new OscillatorNode(c, { type: t.wave ?? 'sine', frequency: t.freqHz });
+  const env = new GainNode(c, { gain: 0 });
+  env.gain.setValueAtTime(0, start);
+  env.gain.linearRampToValueAtTime(peak, start + attack);
+  env.gain.setValueAtTime(peak, stop - release);
+  env.gain.linearRampToValueAtTime(0, stop);
+  osc.connect(env).connect(dest);
+  osc.start(start);
+  osc.stop(stop);
+  osc.onended = () => env.disconnect();
+  return { freqHz: t.freqHz, start, stop };
+}
+
+/**
+ * Play exact-length tones at their onsets. Starting a new sequence stops the previous one.
+ * Returns { stop, schedule } (schedule = the exact start/stop times), or null when nothing was played.
+ */
+export function playTones(
+  tones: Tone[],
+  { onStep, onEnd }: { onStep?: (i: number) => void; onEnd?: () => void } = {},
+): { stop: () => void; schedule: ScheduledTone[] } | null {
+  stopCurrent?.();
+  const peak = volumeLevel();
+  if (peak === 0) return null;
+  const o = getOutput();
+  if (!o) return null;
+  const { ctx: c } = o;
+  const bus = new GainNode(c, { gain: 1 });
+  bus.connect(o.out);
+
+  const t0 = c.currentTime + 0.05;
+  const schedule = tones.map((t) => scheduleTone(c, bus, t, t0 + t.onsetMs / 1000, peak));
+  if (import.meta.env.DEV) {
+    console.debug(
+      '[playTones]',
+      schedule.map((s) => `${s.freqHz.toFixed(2)} Hz: ${((s.stop - s.start) * 1000).toFixed(2)} ms`).join(' · '),
+    );
+  }
+  const timers = onStep
+    ? schedule.map((s, i) => window.setTimeout(() => onStep(i), (s.start - c.currentTime) * 1000))
+    : [];
+  const end = Math.max(t0, ...schedule.map((s) => s.stop));
+
+  let stopped = false;
+  const finish = () => {
+    if (stopped) return;
+    stopped = true;
+    timers.forEach(clearTimeout);
+    if (stopCurrent === stop) stopCurrent = null;
+    onEnd?.();
+  };
+  timers.push(window.setTimeout(finish, (end - c.currentTime) * 1000 + 50));
+
+  function stop() {
+    bus.gain.setTargetAtTime(0, c.currentTime, 0.01);
+    window.setTimeout(() => bus.disconnect(), 150);
+    finish();
+  }
+  stopCurrent = stop;
+  (window as any).__lastToneSchedule = schedule; // handy for checking exact timings in the console
+  return { stop, schedule };
 }

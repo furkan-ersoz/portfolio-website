@@ -244,6 +244,17 @@ export const HAPPY_BIRTHDAY: [HbNote, number, number][] = [
   ['C', 0, 0.75], ['C', 0, 0.25], ['B', 0, 1], ['G', 0, 1], ['A', 0, 1], ['G', 0, 2],
 ];
 export const HB_WESTERN: Record<HbNote, number> = { G: 0, A: 200, B: 400, C: 500, D: 700, E: 900, 'F♯': 1100 };
+// Turkish (AEU) names of the melody's notes when Rast = G4. Key: note + octave offset.
+export const HB_TURKISH: Record<string, string> = {
+  'D-1': 'Yegâh',
+  'E-1': 'Hüseynîaşîran',
+  'F♯-1': 'Irak',
+  'G0': 'Rast',
+  'A0': 'Dügâh',
+  'B0': 'Segâh',
+  'C0': 'Çârgâh',
+  'D0': 'Nevâ',
+};
 export const HB_RAST: Record<HbNote, number> = {
   G: commaToCents(0),
   A: commaToCents(9),
