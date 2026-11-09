@@ -1,0 +1,96 @@
+---
+// Figure 4 — how other cultures cut the octave. Possible notes only, no scales; all from Sol = 392 Hz.
+import Ruler, { type RulerMarker, type RulerRow } from './Ruler.astro';
+import {
+  CODES, LU, PELOG_CENTS, PRACTICAL, SLENDRO_LABELS, SRUTI, WESTERN, aeuAt, commaToCents, fifthChainCents,
+  fmtCents, fmtDiff, fmtHz, hz, nearestComma, nearestWestern, parseRatio, ratioToCents,
+} from '../../lib/tuning';
+
+function marker(cents: number, label: string, title: string, step: string): RulerMarker {
+  const w = nearestWestern(cents);
+  const k = nearestComma(cents);
+  return {
+    cents,
+    label,
+    tip: [
+      title,
+      step,
+      `${fmtHz(hz(cents))} · ${fmtCents(cents)}`,
+      `Nearest Western: ${w.name} (${fmtDiff(w.diff)})`,
+      `Nearest 53-grid comma: ${k.k} (${fmtDiff(k.diff)})`,
+    ],
+  };
+}
+
+const edo = (n: number, labels: (i: number) => string, title: string, note: string): RulerMarker[] =>
+  Array.from({ length: n + 1 }, (_, i) =>
+    marker((i * 1200) / n, labels(i), `${title} ${labels(i)}`, `Step ${i} of ${n} (${(1200 / n).toFixed(1)} cents each${note})`),
+  );
+
+const rows: RulerRow[] = [
+  {
+    name: 'Javanese slendro',
+    sub: '5-EDO, idealized',
+    markers: edo(5, (i) => SLENDRO_LABELS[i], 'Slendro', ', idealized; real steps vary ≈214–259'),
+  },
+  {
+    name: 'Javanese pelog',
+    sub: 'average of measured gamelans',
+    markers: [...PELOG_CENTS, 1200].map((c, i) =>
+      marker(c, String((i % 7) + 1), `Pelog ${(i % 7) + 1}`, 'Approximate average of measured gamelans'),
+    ),
+  },
+  {
+    name: 'Thai',
+    sub: '7-EDO, idealized',
+    markers: edo(7, (i) => String((i % 7) + 1), 'Thai', ', idealized'),
+  },
+  {
+    name: 'Western',
+    sub: '12-TET',
+    markers: WESTERN.map((name, i) => marker(i * 100, name, name, `Step ${i} of 12 (100 cents each)`)),
+  },
+  {
+    name: 'Chinese 12 lü',
+    sub: 'chain of fifths from huangzhong = G',
+    markers: [
+      ...LU.map(([name, k]) => marker(fifthChainCents(k), name, name, `${k} fifth${k === 1 ? '' : 's'} up from huangzhong (3/2 each)`)),
+      marker(1200, 'Huangzhong', 'Huangzhong (octave)', 'Octave, 2/1'),
+    ],
+  },
+  {
+    name: 'Indian 22 śruti',
+    sub: 'Sa = G, one common just list',
+    markers: SRUTI.map((r, i) =>
+      marker(
+        ratioToCents(parseRatio(r)),
+        i === 0 || i === 22 ? 'Sa' : i === 13 ? 'Pa' : String(i),
+        i === 0 ? 'Sa' : i === 22 ? 'Sa (octave)' : i === 13 ? `Pa · śruti ${i}` : `Śruti ${i}`,
+        `Ratio ${r}`,
+      ),
+    ),
+  },
+  {
+    name: 'Arabic & Persian',
+    sub: '24-EDO quarter tones (theory)',
+    markers: edo(24, (i) => String(i), 'Quarter tone', ''),
+  },
+  {
+    name: 'Turkish practice',
+    sub: 'SymbTr, 37 pitches',
+    markers: PRACTICAL.map((pos) => {
+      const a = aeuAt(pos);
+      return marker(commaToCents(pos), CODES[pos], a ? `${CODES[pos]} · ${a.name}` : `${CODES[pos]} · not in AEU`, `Comma ${pos}`);
+    }),
+  },
+  {
+    name: 'Turkish 53-grid',
+    sub: 'Holdrian commas',
+    markers: Array.from({ length: 54 }, (_, k) => marker(commaToCents(k), String(k), `Comma ${k} (${CODES[k]})`, `Step ${k} of 53 (22.64 cents each)`)),
+  },
+];
+---
+
+<Ruler id="fig-world" title="Figure 4 · How musical cultures cut the octave (coarse at the bottom, fine at the top)" rows={rows} minWidth={1040}>
+  <slot />
+</Ruler>

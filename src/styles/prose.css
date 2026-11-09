@@ -1,0 +1,157 @@
+/* ─────────────────────────────────────────────────────────────
+   PROSE: typography for blog post bodies (src/layouts/PostLayout.astro).
+   Same rules as the project pages (src/pages/projects/[slug].astro),
+   plus a few blog extras at the bottom.
+   ───────────────────────────────────────────────────────────── */
+
+/* ── Typography for the MDX body ── */
+.prose {
+  margin-top: 2rem;
+}
+.prose h2 {
+  font-size: 1.25rem;
+  margin: 2.5rem 0 0.75rem;
+}
+.prose h3 {
+  font-size: 1.1rem;
+  margin: 2rem 0 0.5rem;
+}
+.prose p,
+.prose ul,
+.prose ol {
+  margin: 0 0 1.1rem;
+}
+.prose li {
+  margin-bottom: 0.35rem;
+}
+.prose li::marker {
+  color: var(--text-muted);
+}
+.prose strong {
+  font-weight: 600;
+}
+.prose blockquote {
+  margin: 1.5rem 0;
+  padding-left: 1rem;
+  border-left: 2px solid var(--border-strong);
+  color: var(--text-muted);
+}
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--surface-hover);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+.prose img,
+.prose video,
+.prose iframe {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 1.5rem 0 0.5rem;
+  border: 0;
+  border-radius: var(--radius);
+}
+.prose iframe {
+  aspect-ratio: 16 / 9;
+  height: auto;
+}
+.prose figure {
+  margin: 1.5rem 0;
+}
+.prose figcaption,
+.prose .caption {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+.prose audio {
+  width: 100%;
+}
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 2.5rem 0;
+}
+/* a grid of big numbers (e.g. "400+ members") */
+.prose .stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 1.5rem 0;
+}
+.prose .stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.9rem 0.85rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.prose .stats strong {
+  font-size: 1.6rem;
+  line-height: 1.1;
+  color: var(--text);
+}
+.prose .stats span {
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+@media (max-width: 640px) {
+  .prose .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+/* tall, narrow images (e.g. a phone or email screenshot): centred, not full width */
+.prose .figure-narrow {
+  max-width: 440px;
+  margin: 1.5rem auto;
+}
+.prose .figure-narrow img {
+  margin-top: 0;
+}
+.prose .figure-narrow .caption {
+  text-align: center;
+}
+.prose table {
+  display: block; /* lets a wide table scroll sideways on phones */
+  overflow-x: auto;
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.prose th,
+.prose td {
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+.prose th {
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom-color: var(--border-strong);
+}
+.prose > :first-child {
+  margin-top: 0;
+}
+
+
+/* ── Blog extras ── */
+.prose h2 {
+  scroll-margin-top: 1rem;
+}
+.prose td.num,
+.prose th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.prose .note {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+.prose ol.sources {
+  font-size: 0.92rem;
+}

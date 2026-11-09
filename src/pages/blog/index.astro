@@ -1,0 +1,82 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPosts, formatPostDate, readingMinutes } from '../../lib/blog';
+import { withBase } from '../../lib/url';
+
+const posts = await getPosts();
+---
+
+<BaseLayout title="Blog" description="Notes on music, pitch, perception and music technology.">
+  <h1 class="page-title">Blog</h1>
+
+  {
+    posts.length === 0 ? (
+      <p class="muted">No posts yet.</p>
+    ) : (
+      <ol class="posts">
+        {posts.map((post) => (
+          <li>
+            <a class="post-link" href={withBase(`/blog/${post.id}`)}>
+              <p class="meta">
+                <time datetime={post.data.date.toISOString()}>{formatPostDate(post.data.date)}</time>
+                <span aria-hidden="true">·</span>
+                <span>{readingMinutes(post)} min read</span>
+                {post.data.draft && <span class="badge">Draft</span>}
+              </p>
+              <h2>{post.data.title}</h2>
+              <p class="summary">{post.data.summary}</p>
+            </a>
+          </li>
+        ))}
+      </ol>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .posts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+  }
+  .posts li {
+    border-bottom: 1px solid var(--border);
+  }
+  .post-link {
+    display: block;
+    padding-block: 1.25rem;
+    text-decoration: none;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.4rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+  .meta .badge {
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  h2 {
+    font-size: clamp(1.1rem, 3vw, 1.25rem);
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 0.2em;
+    transition: text-decoration-color 0.2s;
+  }
+  .post-link:hover h2,
+  .post-link:focus-visible h2 {
+    text-decoration-color: currentColor;
+  }
+  .summary {
+    margin: 0.4rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+</style>

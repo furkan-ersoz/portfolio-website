@@ -43,10 +43,24 @@ const about = defineCollection({
     }),
 });
 
+// Blog posts: one .md/.mdx file per post in src/content/blog/. The file name is the URL (/blog/<file-name>).
+// `draft: true` keeps a post out of the built site (it still shows while running `npm run dev`).
+const blog = defineCollection({
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog' }),
+  schema: z.object({
+    title: z.string(),
+    date: z.coerce.date(),
+    updated: z.coerce.date().optional(),
+    summary: z.string(), // one line, shown on /blog and in search results
+    tags: z.array(z.string()).default([]),
+    draft: z.boolean().default(false),
+  }),
+});
+
 // ─── Adding more collections later (e.g. concerts, posts) ───
 // 1. Copy the `projects` block above, rename it (e.g. `concerts`) and point
 //    `base` at a new folder (e.g. './src/content/concerts').
 // 2. Add it to the export below.
 // 3. Register it in src/lib/selected.ts so featured items show on the homepage.
 
-export const collections = { projects, about };
+export const collections = { projects, about, blog };

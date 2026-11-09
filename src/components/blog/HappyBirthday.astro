@@ -1,0 +1,210 @@
+---
+// Listen: Happy Birthday (public domain) in 12-TET and in Rast (53-grid), in three registers.
+import { HAPPY_BIRTHDAY, HB_RAST, HB_WESTERN } from '../../lib/tuning';
+
+const BEAT_MS = 600; // 100 BPM
+const melody = HAPPY_BIRTHDAY.map(([note, octave, beats]) => ({
+  note,
+  ms: beats * BEAT_MS,
+  western: octave * 1200 + HB_WESTERN[note],
+  rast: octave * 1200 + HB_RAST[note],
+}));
+const REGISTERS = [
+  { hz: 392, label: 'G4 = 392 Hz' },
+  { hz: 196, label: 'G3 = 196 Hz' },
+  { hz: 98, label: 'G2 = 98 Hz' },
+];
+---
+
+<figure class="hb" data-melody={JSON.stringify(melody)}>
+  <p class="hb-title">Happy Birthday in two tunings</p>
+
+  <div class="hb-controls">
+    <button type="button" class="button" data-play="western">▶ Play Western</button>
+    <button type="button" class="button" data-play="rast">▶ Play Rast</button>
+    <button type="button" class="button" data-play="ab">▶ A/B</button>
+    <button type="button" class="button" data-play="stop">■ Stop</button>
+  </div>
+
+  <fieldset class="hb-register">
+    <legend>Register (G):</legend>
+    {
+      REGISTERS.map((r, i) => (
+        <label>
+          <input type="radio" name="hb-register" value={r.hz} checked={i === 0} />
+          {r.label}
+        </label>
+      ))
+    }
+  </fieldset>
+
+  <ol class="hb-notes" aria-hidden="true">
+    {
+      melody.map((n) => (
+        <li class:list={{ moved: Math.abs(n.western - n.rast) > 10 }}>{n.note}</li>
+      ))
+    }
+  </ol>
+  <p class="hb-status" aria-live="polite">&nbsp;</p>
+
+  <figcaption>
+    Same melody, same rhythm (3/4, 100 BPM). In Rast, B becomes Segâh (15.1 cents lower) and F♯ becomes Eviç (13.2 cents
+    lower); the notes that move are underlined. The other notes move by less than 6 cents. Try the lower registers: in Hz the
+    same cents get smaller.
+  </figcaption>
+</figure>
+
+<script>
+  import { playSequence } from '../../scripts/play-note';
+
+  interface Note {
+    note: string;
+    ms: number;
+    western: number;
+    rast: number;
+  }
+
+  function setup(fig: HTMLElement) {
+    fig.dataset.ready = '';
+    const melody: Note[] = JSON.parse(fig.dataset.melody || '[]');
+    const chips = [...fig.querySelectorAll<HTMLElement>('.hb-notes li')];
+    const status = fig.querySelector<HTMLElement>('.hb-status')!;
+    let stop: (() => void) | null = null;
+
+    const base = () => Number(fig.querySelector<HTMLInputElement>('input[name="hb-register"]:checked')?.value ?? 392);
+    const mark = (i: number) => chips.forEach((c, j) => c.classList.toggle('now', j === i));
+
+    function sequence(tuning: 'western' | 'rast') {
+      const g = base();
+      return melody.map((n) => ({ freq: g * 2 ** (n[tuning] / 1200), ms: n.ms, gate: 0.95 }));
+    }
+
+    function play(mode: string) {
+      stop?.();
+      stop = null;
+      mark(-1);
+      if (mode === 'stop') {
+        status.textContent = ' ';
+        return;
+      }
+      const rest = { freq: 0, ms: 1200 };
+      const parts: ('western' | 'rast')[] = mode === 'ab' ? ['western', 'rast'] : [mode as 'western' | 'rast'];
+      const notes = parts.flatMap((p, i) => (i ? [rest, ...sequence(p)] : sequence(p)));
+      const n = melody.length;
+      stop = playSequence(notes, {
+        onStep: (i) => {
+          // which part are we in? (A/B has a rest between the two)
+          const inB = mode === 'ab' && i > n;
+          const idx = inB ? i - n - 1 : i;
+          if (idx < 0 || idx >= n) return mark(-1);
+          const part = mode === 'ab' ? (inB ? 'rast' : 'western') : mode;
+          status.textContent = `Playing: ${part === 'rast' ? 'Rast (53-grid)' : 'Western (12-TET)'} · G = ${base()} Hz`;
+          mark(idx);
+        },
+        onEnd: () => {
+          mark(-1);
+          status.textContent = ' ';
+        },
+      });
+      if (!stop) status.textContent = 'Sound is off. Turn up Vol in the sound panel (bottom-right).';
+    }
+
+    fig.querySelectorAll<HTMLButtonElement>('[data-play]').forEach((btn) =>
+      btn.addEventListener('click', () => play(btn.dataset.play!)),
+    );
+  }
+
+  const init = () => document.querySelectorAll<HTMLElement>('.hb:not([data-ready])').forEach(setup);
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .hb {
+    --fig-accent: #ff5a3c;
+    margin: 2rem 0;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.78);
+    border: 1px solid var(--border);
+    font-size: 0.9rem;
+  }
+  .hb-title {
+    margin: 0 0 0.75rem;
+    font-weight: 600;
+  }
+  .hb-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .hb-controls .button {
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--text);
+    cursor: pointer;
+    padding: 0.45em 0.8em;
+  }
+  .hb-register {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin: 0.85rem 0 0;
+    padding: 0;
+    border: 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+  .hb-register legend {
+    float: left;
+    padding: 0;
+    margin-right: 0.25rem;
+  }
+  .hb-register label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+    color: var(--text);
+  }
+  .hb-register input {
+    accent-color: var(--text);
+    margin: 0;
+  }
+  .hb-notes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    list-style: none;
+    margin: 0.9rem 0 0;
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+  .hb-notes li {
+    min-width: 2.1em;
+    padding: 0.15em 0.3em;
+    text-align: center;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .hb-notes li.moved {
+    text-decoration: underline;
+    text-decoration-color: var(--fig-accent);
+    text-underline-offset: 3px;
+  }
+  .hb-notes li.now {
+    color: var(--bg);
+    background: var(--text);
+    border-color: var(--text);
+    text-shadow: none;
+  }
+  .hb-status {
+    margin: 0.5rem 0 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+</style>

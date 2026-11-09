@@ -1,0 +1,681 @@
+---
+// ─────────────────────────────────────────────────────────────
+// RULER FIGURE: horizontal rulers stacked bottom-up over one shared
+// frequency axis (one octave, 392–784 Hz).
+//
+// • Log axis (default, "as the ear hears it") ⇄ linear Hz: only a CSS class changes;
+//   every marker carries both positions (--xl / --xn) and both label lanes.
+// • Dashed guides at the 12-TET positions.
+// • Every note is a <button>: hover / focus / tap shows a tooltip and a highlight
+//   line across all rows; click / Enter / Space plays it through playNote().
+//   Shift-click (or Shift+Enter) plays the whole row as an ascending scale.
+// • Keyboard: one Tab stop per row; ←/→ move along a row, ↑/↓ jump between rows.
+// • Phones: the plot keeps a minimum width and scrolls sideways inside the figure.
+// ─────────────────────────────────────────────────────────────
+import { BASE_HZ, hz } from '../../lib/tuning';
+
+export interface RulerMarker {
+  cents: number; // 0…1200 above Sol
+  label: string; // short visible label
+  tip: string[]; // tooltip lines; the first one is the title
+  tone?: 'accent' | 'minor'; // accent = highlighted colour, minor = small grey tick
+  tag?: string; // small text above the label, e.g. "durak"
+  note?: string; // small annotation under the line
+}
+export interface RulerRow {
+  name: string;
+  sub?: string;
+  markers: RulerMarker[];
+}
+
+interface Props {
+  id: string;
+  title: string; // short figure title (also the accessible name)
+  rows: RulerRow[]; // bottom → top
+  minWidth?: number; // px; the plot scrolls sideways below this
+  legend?: { tone?: 'accent' | 'minor'; label: string }[];
+}
+
+const { id, title, rows, minWidth = 960, legend = [] } = Astro.props;
+
+const PAD = 38; // px left/right of the scale (room for the end labels)
+const LANE = 14; // px per label lane
+const MAX_LANES = 3;
+
+const xLog = (c: number) => c / 1200;
+const xLin = (c: number) => (hz(c) - BASE_HZ) / BASE_HZ;
+
+// Rough label width (11px system font) for the lane layout.
+const textWidth = (s: string, size = 11) => s.length * size * 0.6 + 6;
+
+// Greedy lane assignment so labels don't overlap at the plot's minimum width.
+function lanes(markers: RulerMarker[], x: (c: number) => number): number[] {
+  const scale = minWidth - 2 * PAD;
+  const ends: number[] = [];
+  return markers.map((m) => {
+    const w = Math.max(textWidth(m.label), m.tag ? textWidth(m.tag, 9.5) : 0);
+    const left = x(m.cents) * scale - w / 2;
+    const span = m.tag ? 2 : 1; // a tag sits one lane above its label
+    let lane = 0;
+    for (; lane < MAX_LANES; lane++) {
+      let free = true;
+      for (let s = 0; s < span; s++) if ((ends[lane + s] ?? -Infinity) + 3 > left) free = false;
+      if (free) break;
+    }
+    if (lane >= MAX_LANES) lane = ends.indexOf(Math.min(...ends.slice(0, MAX_LANES)));
+    for (let s = 0; s < span; s++) ends[lane + s] = left + w;
+    return lane;
+  });
+}
+
+const rendered = [...rows].reverse().map((row) => {
+  const markers = [...row.markers].sort((a, b) => a.cents - b.cents);
+  const ll = lanes(markers, xLog);
+  const ln = lanes(markers, xLin);
+  const used = Math.max(1, ...markers.map((m, i) => Math.max(ll[i], ln[i]) + 1 + (m.tag ? 1 : 0)));
+  const hasNote = markers.some((m) => m.note);
+  return { ...row, markers, ll, ln, used, hasNote };
+});
+
+const guides = Array.from({ length: 13 }, (_, i) => i * 100);
+const ticks = [392, 450, 500, 550, 600, 650, 700, 784];
+const tickCents = (f: number) => 1200 * Math.log2(f / BASE_HZ);
+const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)}`;
+---
+
+<figure class="ruler" id={id} style={`--minw:${minWidth}px;--pad:${PAD}px;--lane:${LANE}px`} aria-label={title}>
+  <div class="r-head">
+    <p class="r-title">{title}</p>
+    <div class="r-mode" role="group" aria-label="Frequency axis">
+      <button type="button" data-mode="log" aria-pressed="true">Log <span class="r-mode-sub">(as the ear hears it)</span></button>
+      <button type="button" data-mode="lin" aria-pressed="false">Linear Hz</button>
+    </div>
+  </div>
+
+  <div class="r-scroll">
+    <div class="r-plot">
+      <div class="r-rows">
+        <div class="r-overlay" aria-hidden="true">
+          {guides.map((c) => <span class="r-guide" style={pos(c)} />)}
+          <span class="r-hl" hidden />
+        </div>
+
+        {
+          rendered.map((row) => (
+            <div class="r-row" role="group" aria-label={row.name} style={`--lanes:${row.used};--nh:${row.hasNote ? 14 : 0}px`}>
+              <p class="r-name">
+                {row.name}
+                {row.sub && <span class="r-sub"> · {row.sub}</span>}
+              </p>
+              <div class="r-track">
+                <span class="r-line" aria-hidden="true" />
+                {row.markers.map((m, i) => (
+                  <button
+                    type="button"
+                    class:list={['mk', m.tone && `t-${m.tone}`]}
+                    style={`${pos(m.cents)};--ll:${row.ll[i]};--ln:${row.ln[i]}`}
+                    data-f={hz(m.cents).toFixed(3)}
+                    data-c={m.cents.toFixed(3)}
+                    data-tip={JSON.stringify(m.tip)}
+                    aria-label={m.tip.join('. ')}
+                    tabindex={i === 0 ? 0 : -1}
+                  >
+                    {m.tag && (
+                      <span class="mk-tag" aria-hidden="true">
+                        {m.tag}
+                      </span>
+                    )}
+                    <span class="mk-label" aria-hidden="true">
+                      {m.label}
+                    </span>
+                    <span class="mk-dot" aria-hidden="true" />
+                    {m.note && (
+                      <span class="mk-note" aria-hidden="true">
+                        {m.note}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+
+      <div class="r-axis" aria-hidden="true">
+        {
+          ticks.map((f) => (
+            <span class="r-tick" style={pos(tickCents(f))}>
+              {f}
+            </span>
+          ))
+        }
+        <span class="r-unit">Hz</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="r-foot">
+    {
+      legend.length > 0 && (
+        <ul class="r-legend">
+          {legend.map((l) => (
+            <li>
+              <span class:list={['r-swatch', l.tone && `t-${l.tone}`]} aria-hidden="true" />
+              {l.label}
+            </li>
+          ))}
+          <li>
+            <span class="r-swatch r-swatch-guide" aria-hidden="true" />
+            12-TET position
+          </li>
+        </ul>
+      )
+    }
+    <p class="r-hint">Click or tap a note to hear it · Shift-click plays the row · Keyboard: Tab to a row, ←/→ to move, Enter to play</p>
+    <p class="r-status" aria-live="polite"></p>
+  </div>
+
+  <figcaption><slot /></figcaption>
+
+  <div class="r-tip" role="tooltip" hidden></div>
+</figure>
+
+<script>
+  import { playNote, playSequence } from '../../scripts/play-note';
+
+  const MUTED_MSG = 'Sound is off. Turn up Vol in the sound panel (bottom-right).';
+
+  function setup(fig: HTMLElement) {
+    fig.dataset.ready = '';
+    const scroller = fig.querySelector<HTMLElement>('.r-scroll')!;
+    const tip = fig.querySelector<HTMLElement>('.r-tip')!;
+    const hl = fig.querySelector<HTMLElement>('.r-hl')!;
+    const status = fig.querySelector<HTMLElement>('.r-status')!;
+    const rows = [...fig.querySelectorAll<HTMLElement>('.r-row')];
+    let active: HTMLElement | null = null;
+    let statusTimer = 0;
+
+    const say = (msg: string) => {
+      status.textContent = msg;
+      clearTimeout(statusTimer);
+      statusTimer = window.setTimeout(() => (status.textContent = ''), 4000);
+    };
+
+    // ── Log ⇄ linear ──
+    const modeButtons = fig.querySelectorAll<HTMLButtonElement>('[data-mode]');
+    modeButtons.forEach((btn) =>
+      btn.addEventListener('click', () => {
+        const lin = btn.dataset.mode === 'lin';
+        fig.classList.toggle('is-lin', lin);
+        modeButtons.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+        if (active) window.setTimeout(() => active && show(active), 380); // after the slide
+      }),
+    );
+
+    // ── Tooltip + highlight line ──
+    function show(mk: HTMLElement) {
+      active?.classList.remove('is-active');
+      active = mk;
+      mk.classList.add('is-active');
+      hl.style.setProperty('--xl', mk.style.getPropertyValue('--xl'));
+      hl.style.setProperty('--xn', mk.style.getPropertyValue('--xn'));
+      hl.hidden = false;
+
+      const lines: string[] = JSON.parse(mk.dataset.tip || '[]');
+      tip.replaceChildren(
+        ...lines.map((text, i) => {
+          const el = document.createElement(i === 0 ? 'strong' : 'span');
+          el.textContent = text;
+          return el;
+        }),
+      );
+      tip.hidden = false;
+      const box = fig.getBoundingClientRect();
+      const dot = mk.querySelector('.mk-dot')!.getBoundingClientRect();
+      const top = Math.min(dot.top, mk.querySelector('.mk-label')!.getBoundingClientRect().top);
+      const x = dot.left + dot.width / 2 - box.left;
+      const w = tip.offsetWidth;
+      tip.style.left = `${Math.max(0, Math.min(box.width - w, x - w / 2))}px`;
+      tip.style.top = `${top - box.top - tip.offsetHeight - 8}px`;
+    }
+    function hide() {
+      active?.classList.remove('is-active');
+      active = null;
+      tip.hidden = true;
+      hl.hidden = true;
+    }
+
+    // ── Sound ──
+    const markersOf = (row: Element) => [...row.querySelectorAll<HTMLElement>('.mk')];
+    function flash(mk: HTMLElement, ms: number) {
+      mk.classList.add('is-playing');
+      window.setTimeout(() => mk.classList.remove('is-playing'), ms);
+    }
+    function play(mk: HTMLElement) {
+      if (playNote(Number(mk.dataset.f))) flash(mk, 600);
+      else say(MUTED_MSG);
+    }
+    function playRow(mk: HTMLElement) {
+      const list = markersOf(mk.closest('.r-row')!);
+      const stop = playSequence(
+        list.map((m) => ({ freq: Number(m.dataset.f), ms: 260 })),
+        { onStep: (i) => flash(list[i], 240) },
+      );
+      if (!stop) say(MUTED_MSG);
+    }
+
+    // ── Pointer / touch ──
+    fig.querySelectorAll<HTMLElement>('.mk').forEach((mk) => {
+      mk.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && show(mk));
+      mk.addEventListener('pointerleave', (e) => {
+        if (e.pointerType !== 'mouse') return;
+        // back to the keyboard-focused note, if there is one in this figure
+        const focused = document.activeElement as HTMLElement | null;
+        if (focused?.classList.contains('mk') && fig.contains(focused)) show(focused);
+        else hide();
+      });
+      mk.addEventListener('focus', () => {
+        markersOf(mk.closest('.r-row')!).forEach((m) => (m.tabIndex = m === mk ? 0 : -1));
+        show(mk);
+      });
+      mk.addEventListener('blur', () => active === mk && hide());
+      mk.addEventListener('click', (e) => {
+        show(mk); // touch: Safari doesn't focus buttons on tap
+        if (e.shiftKey) playRow(mk);
+        else play(mk);
+      });
+    });
+    scroller.addEventListener('scroll', () => active && show(active), { passive: true });
+
+    // ── Keyboard: roving focus inside the plot ──
+    fig.querySelector('.r-rows')!.addEventListener('keydown', (ev) => {
+      const e = ev as KeyboardEvent;
+      const mk = (e.target as HTMLElement).closest<HTMLElement>('.mk');
+      if (!mk) return;
+      const row = mk.closest<HTMLElement>('.r-row')!;
+      const list = markersOf(row);
+      const i = list.indexOf(mk);
+      let next: HTMLElement | undefined;
+      if (e.key === 'ArrowRight') next = list[Math.min(list.length - 1, i + 1)];
+      else if (e.key === 'ArrowLeft') next = list[Math.max(0, i - 1)];
+      else if (e.key === 'Home') next = list[0];
+      else if (e.key === 'End') next = list.at(-1);
+      else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        const r = rows[rows.indexOf(row) + (e.key === 'ArrowUp' ? -1 : 1)];
+        if (r) {
+          const c = Number(mk.dataset.c);
+          next = markersOf(r).reduce((a, b) =>
+            Math.abs(Number(b.dataset.c) - c) < Math.abs(Number(a.dataset.c) - c) ? b : a,
+          );
+        }
+      } else if ((e.key === 'Enter' || e.key === ' ') && e.shiftKey) {
+        e.preventDefault();
+        show(mk);
+        playRow(mk);
+        return;
+      } else if (e.key === 'Escape') {
+        hide();
+        return;
+      } else return;
+      e.preventDefault();
+      if (next && next !== mk) {
+        next.focus({ preventScroll: true });
+        next.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      }
+    });
+  }
+
+  const init = () => document.querySelectorAll<HTMLElement>('.ruler:not([data-ready])').forEach(setup);
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .ruler {
+    --fig-accent: #ff5a3c;
+    --half: min(540px, calc(50vw - var(--gutter)));
+    position: relative;
+    /* wider than the text column on computers, full width on phones */
+    margin: 2.25rem calc(50% - var(--half));
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+
+  .r-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-bottom: 0.6rem;
+  }
+  .r-title {
+    margin: 0;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .r-mode {
+    display: inline-flex;
+    border: 1px solid var(--border-strong);
+  }
+  .r-mode button {
+    appearance: none;
+    font: inherit;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    background: #000;
+    border: 0;
+    padding: 0.35em 0.8em;
+    cursor: pointer;
+  }
+  .r-mode button + button {
+    border-left: 1px solid var(--border-strong);
+  }
+  .r-mode button[aria-pressed='true'] {
+    background: var(--text);
+    color: var(--bg);
+    text-shadow: none;
+  }
+  @media (max-width: 480px) {
+    .r-mode-sub {
+      display: none;
+    }
+  }
+
+  .r-scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    background: rgba(0, 0, 0, 0.78);
+    border: 1px solid var(--border);
+  }
+  .r-plot {
+    position: relative;
+    min-width: var(--minw);
+    padding-top: 0.5rem;
+  }
+  .r-rows {
+    position: relative;
+  }
+
+  /* guides + highlight, spanning every row */
+  .r-overlay {
+    position: absolute;
+    inset: 0 var(--pad);
+    pointer-events: none;
+  }
+  .r-guide,
+  .r-hl {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--xl) * 100%);
+    transition: left 0.35s var(--ease);
+  }
+  .r-guide {
+    border-left: 1px dashed rgba(255, 255, 255, 0.14);
+  }
+  .r-hl {
+    border-left: 1px solid rgba(255, 255, 255, 0.7);
+    transition: none;
+  }
+
+  .r-row {
+    position: relative;
+    padding-top: 0.35rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .r-name {
+    position: sticky;
+    left: 0;
+    display: inline-block;
+    margin: 0;
+    padding: 0 0.6rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .r-sub {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .r-track {
+    position: relative;
+    margin-inline: var(--pad);
+    height: calc(var(--lanes) * var(--lane) + 22px + var(--nh));
+  }
+  .r-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(9px + var(--nh));
+    border-top: 1px solid var(--border-strong);
+  }
+
+  /* ── markers ── */
+  .mk {
+    position: absolute;
+    bottom: 0;
+    left: calc(var(--xl) * 100%);
+    width: 16px;
+    height: 100%;
+    margin-left: -8px;
+    padding: 0;
+    appearance: none;
+    background: none;
+    border: 0;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+    transition: left 0.35s var(--ease);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mk-dot {
+    position: absolute;
+    left: 50%;
+    bottom: calc(5px + var(--nh));
+    width: 9px;
+    height: 9px;
+    margin-left: -4.5px;
+    border-radius: 50%;
+    background: var(--text);
+    transition: transform 0.15s;
+  }
+  .mk-label,
+  .mk-tag,
+  .mk-note {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .mk-label {
+    bottom: calc(17px + var(--nh) + var(--ll) * var(--lane));
+    font-size: 11px;
+    line-height: var(--lane);
+    transition: bottom 0.35s var(--ease);
+  }
+  .mk-tag {
+    bottom: calc(17px + var(--nh) + (var(--ll) + 1) * var(--lane));
+    font-size: 9.5px;
+    line-height: var(--lane);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fig-accent);
+    transition: bottom 0.35s var(--ease);
+  }
+  .mk-note {
+    bottom: 0;
+    font-size: 10px;
+    line-height: 14px;
+    color: var(--text-muted);
+  }
+
+  .t-accent .mk-dot {
+    background: var(--fig-accent);
+  }
+  .t-accent .mk-label {
+    color: var(--fig-accent);
+  }
+  .t-minor .mk-dot {
+    width: 1px;
+    height: 11px;
+    margin-left: -0.5px;
+    bottom: calc(4px + var(--nh));
+    border-radius: 0;
+    background: var(--text-muted);
+  }
+  .t-minor .mk-label {
+    color: var(--text-muted);
+  }
+
+  .mk:hover .mk-dot,
+  .mk.is-active .mk-dot {
+    transform: scale(1.4);
+  }
+  .mk.is-playing .mk-dot {
+    transform: scale(1.8);
+    box-shadow: 0 0 10px currentColor;
+  }
+  .mk:focus-visible {
+    outline: none;
+  }
+  .mk:focus-visible .mk-dot {
+    box-shadow:
+      0 0 0 2px #000,
+      0 0 0 4px var(--text);
+  }
+  .mk:focus-visible .mk-label {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  /* linear axis */
+  .is-lin .mk,
+  .is-lin .r-guide,
+  .is-lin .r-hl,
+  .is-lin .r-tick {
+    left: calc(var(--xn) * 100%);
+  }
+  .is-lin .mk-label {
+    bottom: calc(17px + var(--nh) + var(--ln) * var(--lane));
+  }
+  .is-lin .mk-tag {
+    bottom: calc(17px + var(--nh) + (var(--ln) + 1) * var(--lane));
+  }
+
+  /* ── axis ── */
+  .r-axis {
+    position: relative;
+    margin-inline: var(--pad);
+    height: 2rem;
+    font-size: 10.5px;
+    color: var(--text-muted);
+  }
+  .r-tick {
+    position: absolute;
+    top: 0;
+    left: calc(var(--xl) * 100%);
+    transform: translateX(-50%);
+    padding-top: 7px;
+    transition: left 0.35s var(--ease);
+  }
+  .r-tick::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    height: 5px;
+    border-left: 1px solid var(--border-strong);
+  }
+  .r-unit {
+    position: absolute;
+    right: calc(-1 * var(--pad) + 6px);
+    top: 7px;
+  }
+
+  /* ── footer ── */
+  .r-foot {
+    margin-top: 0.6rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+  .r-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    list-style: none;
+    margin: 0 0 0.3rem;
+    padding: 0;
+  }
+  .r-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .r-swatch {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--text);
+  }
+  .r-swatch.t-accent {
+    background: var(--fig-accent);
+  }
+  .r-swatch.t-minor {
+    width: 1px;
+    height: 11px;
+    border-radius: 0;
+    background: var(--text-muted);
+  }
+  .r-swatch-guide {
+    width: 0;
+    height: 12px;
+    border-radius: 0;
+    background: none;
+    border-left: 1px dashed var(--text-muted);
+  }
+  .r-hint,
+  .r-status {
+    margin: 0;
+  }
+  .r-status:empty {
+    display: none;
+  }
+  .r-status {
+    color: var(--fig-accent);
+  }
+  figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  figcaption :global(p) {
+    margin: 0;
+  }
+
+  /* ── tooltip ── */
+  .r-tip {
+    position: absolute;
+    z-index: 5;
+    max-width: min(320px, 90%);
+    padding: 0.45rem 0.65rem;
+    background: #000;
+    border: 1px solid var(--border-strong);
+    font-size: 0.78rem;
+    line-height: 1.45;
+    pointer-events: none;
+    text-shadow: none;
+  }
+  .r-tip :global(strong),
+  .r-tip :global(span) {
+    display: block;
+  }
+  .r-tip :global(span) {
+    color: var(--text-muted);
+  }
+</style>

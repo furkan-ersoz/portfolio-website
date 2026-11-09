@@ -1,0 +1,58 @@
+---
+// Figure 2 — makams and keys: C major vs. Çârgâh, Rast and four data-derived SymbTr makams.
+import Ruler, { type RulerRow } from './Ruler.astro';
+import { CODES, MAKAMS, aeuAt, commaToCents, fmtCents, fmtHz, hz } from '../../lib/tuning';
+
+const where = (c: number) => `${fmtHz(hz(c))} · ${fmtCents(c)}`;
+
+const MAJOR: [string, number][] = [
+  ['G', 0], ['A', 200], ['B', 400], ['C', 500], ['D', 700], ['E', 900], ['F', 1000], ['G', 1200],
+];
+
+const cMajor: RulerRow = {
+  name: 'C major',
+  sub: 'Western, 12-TET',
+  markers: MAJOR.map(([name, c]) => ({
+    cents: c,
+    label: name,
+    tag: name === 'C' ? 'tonic' : undefined,
+    tip: [name, where(c), ...(name === 'C' ? ['Tonic'] : [])],
+  })),
+};
+
+const makams: RulerRow[] = MAKAMS.map((m) => ({
+  name: m.name,
+  sub: m.sub,
+  markers: m.notes.map((n) => {
+    const c = commaToCents(n.pos);
+    const a = aeuAt(n.pos);
+    const label = a ? a.name : CODES[n.pos];
+    const isFinal = n.pos === m.final;
+    return {
+      cents: c,
+      label,
+      tone: a ? undefined : ('accent' as const),
+      tag: isFinal ? 'durak' : undefined,
+      note: n.note,
+      tip: [
+        a ? `${a.name} (${CODES[n.pos]})` : `${CODES[n.pos]} · not in AEU`,
+        `Comma ${n.pos}`,
+        where(c),
+        ...(n.share !== undefined ? [`${n.share.toFixed(1)}% of this makam's notes`] : []),
+        ...(n.extra ? [n.extra] : []),
+        ...(isFinal ? ['Durak (final note)'] : []),
+      ],
+    };
+  }),
+}));
+---
+
+<Ruler
+  id="fig-makams"
+  title="Figure 2 · Makams and keys on the 53-grid"
+  rows={[cMajor, ...makams]}
+  minWidth={980}
+  legend={[{ label: 'AEU pitch' }, { tone: 'accent', label: 'Not in AEU (Karaosmanoğlu code)' }]}
+>
+  <slot />
+</Ruler>

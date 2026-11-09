@@ -1,0 +1,98 @@
+---
+// Figure 1 — Turkish system comparison: 12-TET, AEU (24), practice (SymbTr, 37), 53-grid.
+import Ruler, { type RulerRow } from './Ruler.astro';
+import {
+  AEU, CODES, COMMA, PRACTICAL, WESTERN, aeuAt, commaToCents, extraAt, fmtCents, fmtDiff, fmtHz, fmtRel, hz,
+  nearestWestern,
+} from '../../lib/tuning';
+
+const nearestAeu = (c: number) => AEU.reduce((a, b) => (Math.abs(b.cents - c) < Math.abs(a.cents - c) ? b : a));
+const where = (c: number) => `${fmtHz(hz(c))} · ${fmtCents(c)}`;
+
+const western: RulerRow = {
+  name: 'Western 12-TET',
+  sub: '12 equal steps of 100 cents',
+  markers: WESTERN.map((name, i) => {
+    const c = i * 100;
+    const a = nearestAeu(c);
+    return {
+      cents: c,
+      label: name,
+      tip: [name, where(c), `Nearest AEU pitch: ${a.name}, ${fmtRel(a.cents - c)}`],
+    };
+  }),
+};
+
+const aeu: RulerRow = {
+  name: 'AEU',
+  sub: '24 pitches from stacked pure fifths',
+  markers: AEU.map((p) => {
+    const w = nearestWestern(p.cents);
+    return {
+      cents: p.cents,
+      label: p.name,
+      tip: [
+        p.name,
+        `Comma ${p.pos}` + (p.k === null ? ' (octave)' : ` · ${p.k > 0 ? '+' : p.k < 0 ? '−' : ''}${Math.abs(p.k)} fifths`),
+        where(p.cents),
+        `Nearest Western note: ${w.name}, ${fmtRel(w.diff)}`,
+        `Deviation from the 53-grid: ${fmtDiff(p.cents - p.pos * COMMA)}`,
+      ],
+    };
+  }),
+};
+
+const practice: RulerRow = {
+  name: 'Practice (SymbTr)',
+  sub: '37 pitches',
+  markers: PRACTICAL.map((pos) => {
+    const c = commaToCents(pos);
+    const a = aeuAt(pos);
+    const e = extraAt(pos);
+    return {
+      cents: c,
+      label: CODES[pos],
+      tone: a ? undefined : ('accent' as const),
+      tip: a
+        ? [`${CODES[pos]} · ${a.name}`, `Comma ${pos}`, where(c), 'An AEU pitch']
+        : [
+            `${CODES[pos]} · not in AEU`,
+            `Comma ${pos}`,
+            where(c),
+            `Written in AEU as ${e!.writtenAs}`,
+            `${e!.notes.toLocaleString('en-US')} notes in SymbTr`,
+            `Most consistent makam (share of pieces): ${e!.makam}`,
+          ],
+    };
+  }),
+};
+
+const grid: RulerRow = {
+  name: '53-tone grid',
+  sub: '1 comma ≈ 22.64 cents',
+  markers: Array.from({ length: 54 }, (_, k) => {
+    const c = commaToCents(k);
+    const a = aeuAt(k);
+    return {
+      cents: c,
+      label: String(k),
+      tone: a ? undefined : ('minor' as const),
+      tip: [`Comma ${k} (${CODES[k]})`, where(c), a ? `AEU pitch: ${a.name}` : 'No AEU pitch here'],
+    };
+  }),
+};
+---
+
+<Ruler
+  id="fig-systems"
+  title="Figure 1 · Three ways to cut the octave, plus what musicians actually play"
+  rows={[western, aeu, practice, grid]}
+  minWidth={1040}
+  legend={[
+    { label: 'AEU pitch / note' },
+    { tone: 'accent', label: 'Used in practice, not in AEU' },
+    { tone: 'minor', label: '53-grid line without an AEU pitch' },
+  ]}
+>
+  <slot />
+</Ruler>

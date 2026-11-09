@@ -1,0 +1,257 @@
+---
+// Figure 3 — one comma vs. the ear's just noticeable difference (JND), in Hz.
+// Our own chart; JND points read from course slides (approximate), not the slide image.
+import { COMMA_RATIO, JND_SLIDE11, jndSlide11, jndWier } from '../../lib/tuning';
+
+const W = 640;
+const H = 360;
+const m = { l: 46, r: 18, t: 14, b: 44 };
+const F_MAX = 5000;
+const D_MAX = 30;
+const X = (f: number) => m.l + (f / F_MAX) * (W - m.l - m.r);
+const Y = (d: number) => m.t + (1 - d / D_MAX) * (H - m.t - m.b);
+const path = (pts: [number, number][]) =>
+  pts.map(([f, d], i) => `${i ? 'L' : 'M'}${X(f).toFixed(1)},${Y(d).toFixed(1)}`).join('');
+
+const jnd11 = path([[0, 3], ...JND_SLIDE11]);
+const wier = path(Array.from({ length: 201 }, (_, i) => [i * 25, jndWier(i * 25)] as [number, number]));
+const fTop = D_MAX / COMMA_RATIO; // where the comma line leaves the chart (≈ 2279 Hz)
+const comma = path([[0, 0], [fTop, D_MAX]]);
+const cross = jndSlide11(0) / COMMA_RATIO; // ≈ 228 Hz
+
+const DEMO = [110, 220, 440, 880];
+const xTicks = [0, 1000, 2000, 3000, 4000, 5000];
+const yTicks = [0, 5, 10, 15, 20, 25, 30];
+---
+
+<figure class="jnd" id="fig-jnd">
+  <p class="jnd-title">Figure 3 · One comma vs. the smallest pitch change the ear notices</p>
+  <div class="jnd-scroll">
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      role="img"
+      aria-labelledby="fig-jnd-desc"
+    >
+      <desc id="fig-jnd-desc">
+        Line chart, frequency 0 to 5000 Hz against a pitch difference in Hz from 0 to 30. One comma is a straight line
+        through the origin, 1.32% of the frequency. The JND curve from the course slide stays near 3 Hz up to about 250 Hz
+        and rises to 30 Hz at 5 kHz; the Wier et al. curve lies below it. The comma line crosses the 3 Hz JND at about
+        {Math.round(cross)} Hz; below that, one comma is smaller than the JND.
+      </desc>
+      <defs>
+        <clipPath id="jnd-clip">
+          <rect x={m.l} y={m.t} width={W - m.l - m.r} height={H - m.t - m.b}></rect>
+        </clipPath>
+      </defs>
+
+      <!-- grid -->
+      <g class="grid">
+        {xTicks.map((f) => <line x1={X(f)} x2={X(f)} y1={m.t} y2={H - m.b} />)}
+        {yTicks.map((d) => <line x1={m.l} x2={W - m.r} y1={Y(d)} y2={Y(d)} />)}
+      </g>
+
+      <!-- below the crossing: one comma is under the JND -->
+      <rect class="band" x={X(0)} y={m.t} width={X(cross) - X(0)} height={H - m.t - m.b}></rect>
+
+      <g clip-path="url(#jnd-clip)">
+        <path class="l-wier" d={wier}></path>
+        <path class="l-jnd" d={jnd11}></path>
+        <path class="l-comma" d={comma}></path>
+        {DEMO.map((f) => <circle class="demo-dot" data-f={f} cx={X(f)} cy={Y(f * COMMA_RATIO)} r="4" />)}
+        <circle class="cross" cx={X(cross)} cy={Y(3)} r="3.5"></circle>
+      </g>
+
+      <!-- labels -->
+      <g class="labels">
+        <text x={X(cross) + 8} y={Y(27.5)} class="t-band">← below ≈{Math.round(cross)} Hz, one comma is under the JND</text>
+        <text x={X(fTop) + 6} y={Y(D_MAX) + 14} class="t-comma">one comma ↑ (52.7 Hz at 4 kHz)</text>
+        <text x={X(3850)} y={Y(25.5)} text-anchor="end" class="t-jnd">JND (course slide 11)</text>
+        <text x={X(4980)} y={Y(13.5)} text-anchor="end" class="t-wier">JND (Wier et al. 1977)</text>
+      </g>
+
+      <!-- axes -->
+      <g class="axis">
+        <line x1={m.l} x2={W - m.r} y1={H - m.b} y2={H - m.b} />
+        <line x1={m.l} x2={m.l} y1={m.t} y2={H - m.b} />
+        {xTicks.map((f) => <text x={X(f)} y={H - m.b + 16} text-anchor="middle">{f === 0 ? '0' : `${f / 1000}k`}</text>)}
+        {yTicks.map((d) => <text x={m.l - 8} y={Y(d) + 4} text-anchor="end">{d}</text>)}
+        <text x={(m.l + W - m.r) / 2} y={H - 6} text-anchor="middle" class="axis-title">frequency (Hz)</text>
+        <text x={12} y={(m.t + H - m.b) / 2} text-anchor="middle" class="axis-title" transform={`rotate(-90 12 ${(m.t + H - m.b) / 2})`}>
+          pitch difference Δf (Hz)
+        </text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="demo">
+    <span class="demo-label">Hear one comma (f, then f · 2<sup>1/53</sup>):</span>
+    {
+      DEMO.map((f) => (
+        <button type="button" class="button demo-btn" data-f={f}>
+          {f} Hz <span class="muted">+{(f * COMMA_RATIO).toFixed(1)} Hz</span>
+        </button>
+      ))
+    }
+    <p class="demo-status" aria-live="polite"></p>
+  </div>
+
+  <figcaption><slot /></figcaption>
+</figure>
+
+<script>
+  import { playSequence } from '../../scripts/play-note';
+
+  const COMMA = 2 ** (1 / 53);
+
+  function setup(fig: HTMLElement) {
+    fig.dataset.ready = '';
+    const status = fig.querySelector<HTMLElement>('.demo-status')!;
+    fig.querySelectorAll<HTMLButtonElement>('.demo-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const f = Number(btn.dataset.f);
+        const dot = fig.querySelector(`.demo-dot[data-f="${f}"]`);
+        fig.querySelectorAll('.demo-btn').forEach((b) => b.removeAttribute('data-playing'));
+        btn.setAttribute('data-playing', '');
+        dot?.classList.add('is-playing');
+        const stop = playSequence(
+          [
+            { freq: f, ms: 700, gate: 0.85 },
+            { freq: f * COMMA, ms: 700, gate: 0.85 },
+          ],
+          {
+            onEnd: () => {
+              btn.removeAttribute('data-playing');
+              dot?.classList.remove('is-playing');
+            },
+          },
+        );
+        status.textContent = stop ? '' : 'Sound is off. Turn up Vol in the sound panel (bottom-right).';
+        if (!stop) {
+          btn.removeAttribute('data-playing');
+          dot?.classList.remove('is-playing');
+        }
+      });
+    });
+  }
+
+  const init = () => document.querySelectorAll<HTMLElement>('.jnd:not([data-ready])').forEach(setup);
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .jnd {
+    --fig-accent: #ff5a3c;
+    margin: 2.25rem 0;
+    font-size: 0.85rem;
+  }
+  .jnd-title {
+    margin: 0 0 0.6rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .jnd-scroll {
+    overflow-x: auto;
+    background: rgba(0, 0, 0, 0.78);
+    border: 1px solid var(--border);
+  }
+  svg {
+    display: block;
+    width: 100%;
+    min-width: 540px;
+    height: auto;
+    text-shadow: none;
+  }
+  .grid line {
+    stroke: rgba(255, 255, 255, 0.07);
+  }
+  .band {
+    fill: var(--fig-accent);
+    opacity: 0.22;
+  }
+  path {
+    fill: none;
+    stroke-width: 2;
+  }
+  .l-jnd {
+    stroke: var(--text);
+  }
+  .l-wier {
+    stroke: var(--text-muted);
+    stroke-dasharray: 5 4;
+  }
+  .l-comma {
+    stroke: var(--fig-accent);
+  }
+  .cross {
+    fill: var(--text);
+  }
+  .demo-dot {
+    fill: #000;
+    stroke: var(--fig-accent);
+    stroke-width: 1.5;
+    transition: r 0.15s;
+  }
+  .demo-dot.is-playing {
+    fill: var(--fig-accent);
+    r: 6;
+  }
+  text {
+    fill: var(--text-muted);
+    font-size: 12px;
+    font-family: var(--font-sans);
+  }
+  .t-comma {
+    fill: var(--fig-accent);
+  }
+  .t-jnd {
+    fill: var(--text);
+  }
+  .t-band {
+    fill: var(--text);
+    font-size: 11.5px;
+  }
+  .axis line {
+    stroke: var(--border-strong);
+  }
+  .axis-title {
+    font-size: 11.5px;
+  }
+
+  .demo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+  .demo-label {
+    width: 100%;
+    color: var(--text-muted);
+  }
+  .demo-btn {
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--text);
+    cursor: pointer;
+    padding: 0.45em 0.8em;
+  }
+  .demo-btn[data-playing] {
+    border-color: var(--fig-accent);
+  }
+  .demo-status {
+    width: 100%;
+    margin: 0;
+    color: var(--fig-accent);
+  }
+  .demo-status:empty {
+    display: none;
+  }
+  figcaption {
+    margin-top: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  figcaption :global(p) {
+    margin: 0;
+  }
+</style>
