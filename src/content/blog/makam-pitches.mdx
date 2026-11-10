@@ -1,7 +1,7 @@
 ---
 title: 'Makam Pitches: Theory, Practice and the Ear'
 date: 2026-11-09
-summary: Which pitches Turkish makam musicians actually play, which ones the official notation can't write, and whether one comma is even audible across the frequency range.
+summary: How many pitches does Turkish makam music really use in one octave, which ones can its official notation write, and how does it compare with other music systems and with what the ear can hear?
 tags: [Makam, Tuning, Pitch Perception, MIR]
 cover: ./makam-pitches.svg
 series: Notes from MPC
@@ -17,114 +17,109 @@ import CommaVsJnd from '../../components/blog/CommaVsJnd.astro';
 import WorldTunings from '../../components/blog/WorldTunings.astro';
 import HappyBirthday from '../../components/blog/HappyBirthday.astro';
 
-Recently, two of my classes started talking to each other.
+Turkish makam music has one of the most finely detailed pitch systems among the world's traditional musics. So what does it actually look like? Can we see where its microtonal notes fall inside one octave, and compare them with Western music and with other microtonal systems?
 
-In a music perception course (MPC) we saw that the ear's pitch resolution, the *just noticeable difference* (JND), is not a fixed number. It depends on frequency. At the same time, in a Turkish classical music class, our teacher explained how the official notation system, **Arel-Ezgi-Uzdilek (AEU)**, divides the octave into 24 unequal pitches measured in *commas*. Then came the interesting part: in practice, musicians use pitches the system cannot write, and that gap is filled by oral tradition, *meşk*, the way makam music is passed from teacher to student by ear.
+I'm a music technology student. I'm Turkish, but I never had a Turkish classical music education, and this has been one of the things I have wondered about most: how many different pitches are really used, and how many of them can be written down?
 
-That left me with a question in three parts. Which pitches do musicians actually use, and which of them can AEU not write? Is one comma, the smallest step in this world, even audible across the whole frequency range? And how does all of this compare with the way other musical cultures cut the octave?
+Before I looked into it, I believed three things that turned out to be wrong:
 
-For me this isn't only academic. When I write a bass line or a microtonal part in a production, I need to know which pitch to tune to, and whether a one-comma difference will still be there once it's down in the low end.
+- **"A whole tone is divided into 9 equal pieces."** Only half true, as we'll see.
+- **"The sharps and flats differ only by amounts nobody can hear."** In most of the range, they can be heard.
+- **"The system taught in school can represent all of Turkish music."** It can't.
 
-A quick word on *makam* for readers outside Turkish music: a makam is a melodic mode. It is a set of pitches plus rules about which notes to stress, how a melody moves through them and where it comes to rest. The final note is called the *durak*.
+In this post you'll find:
 
-## Three ways to cut an octave
+- how the Turkish notation systems divide the octave, and which pitches musicians actually use;
+- what the academic system (AEU) is, how close it is to the 53-tone system, and where it falls short;
+- the 53 Holder koması system itself, and how its smallest step compares with what the human ear can detect;
+- the pitch sets of a few makams, the source of their different flavours and characters;
+- Turkish music next to other pitch systems of the world, all on the same ruler;
+- *Happy Birthday* in G major and in Rast, to hear how well the Turkish system can play a Western tune.
 
-Everything below is measured in **cents**: 1200 cents make an octave, 100 cents make a Western semitone. Cents are logarithmic, so equal steps in cents sound like equal steps to the ear. In Hz the same step gets bigger as you go up: 100 cents above 392 Hz is 23 Hz, 100 cents above 784 Hz is 47 Hz.
+All figures are interactive: click or tap any note to hear it.
 
-- **Western 12-tone equal temperament (12-TET)** splits the octave into 12 equal steps of 100 cents.
-- **AEU** builds 24 pitches by stacking pure fifths (frequency ratio 3/2). The gaps between neighbouring pitches come in three sizes, 1, 3 or 4 commas, which is about 23.5, 66.8 and 90.2 cents. Pitches have names (Rast, Dügâh, Segâh…) and are counted in commas from Rast.
-- **The 53-tone equal division** splits the octave into 53 equal steps. One step is a *Holdrian comma*: 1200/53 ≈ 22.64 cents. The idea goes back to Nicholas Mercator and William Holder in the 17th century (not to Pythagoras, as you sometimes read). Turkish theory uses this grid to count commas.
+## Turkish pitch systems and the pitches actually used
 
-In all figures, one octave runs from Sol (G4) = 392 Hz to 784 Hz, and Rast, the Turkish reference pitch, is placed on Sol.
+Turkish music theory measures pitch in **commas** (*koma*). One comma is about 22.6 cents, where a cent is 1/100 of a Western semitone; 1200 cents make an octave. Cents are logarithmic, so equal steps in cents sound like equal steps to the ear, even though in Hz the same step gets bigger as you go up.
+
+The academic standard is the **Arel-Ezgi-Uzdilek (AEU)** system, named after the three theorists who shaped it in the first half of the 20th century: Hüseyin Sadettin Arel, Suphi Ezgi and Salih Murat Uzdilek. It is the system of conservatories and printed scores. AEU builds 24 pitches per octave by stacking pure fifths (frequency ratio 3/2), and names them: Rast, Dügâh, Segâh, Çârgâh and so on.
+
+AEU turns out to be almost identical to a simpler system, the 53-tone equal division of the octave (more on it below): every AEU pitch lies less than 1 cent from one of its 53 steps. But 24 pitches are not enough. In several makams, musicians play pitches AEU has no symbol for, and that information is passed on by ear, from teacher to student, in the oral tradition called *meşk*. Several alternative systems have been proposed to close the gap (for example Ekrem Karadeniz's 41-tone and Ozan Yarman's 79-tone systems), but none of them is in common use.
+
+Music information retrieval (MIR) research usually works on the 53-tone grid instead. It can hold the pitches outside AEU, and because its steps are equal, it is easy to transpose, to generate digitally and to measure against.
+
+That's also how we can see what musicians really play. **SymbTr**, a corpus of Turkish makam scores built for MIR research by M. Kemal Karaosmanoğlu (2012), stores two values for every note: its AEU spelling, and the pitch an expert says it is actually played at on the 53-tone grid. The current version has 2,200 pieces in 155 makams, 849,403 notes in total. 7.7% of those notes are played off the AEU grid, almost always by exactly one comma. Counting every position that is used in at least 10% of some makam's pieces, practice uses **37 pitches, not 24**: 22 of the AEU pitches plus 15 that AEU can't write. (Two AEU pitches, Dik Hicaz and Dik Mâhur, are practically never used.)
+
+The difference isn't a matter of key. The same written note is played at different heights in different makams. Written Segâh is played at comma 17 in Rast but one comma lower, at comma 16, in Uşşak, Bayati, Hüseynî and Saba. The score is the same; the pitch depends on the makam, and on the tradition that tells you which one to play.
 
 <MakamSystems>
-  Bottom to top: Western 12-TET, the 24 AEU pitches, the 37 pitches used in practice (SymbTr) and the 53-tone grid. Notes are labelled with Karaosmanoğlu's codes: a letter plus the number of commas above (♯) or below (♭) it, so B♭2 is two commas below B. Rast is placed on Sol = 392 Hz; in Turkish practice the absolute pitch depends on the *ahenk* (transposition level), but the cents stay the same.
+  Bottom to top: Western 12-TET, the 24 AEU pitches, the 37 pitches used in practice (from SymbTr) and the 53 Holder koması grid. Diamonds are pitches musicians use that AEU can't write. Notes are labelled with Karaosmanoğlu's codes: a letter plus the number of commas above (♯) or below (♭) it, so B♭2 is two commas below B. Rast is placed on Sol (G4) = 392 Hz; in Turkish practice the absolute pitch depends on the *ahenk* (transposition level), but the cents stay the same.
 </MakamSystems>
 
-## Finding 1: AEU sits on the 53-comma grid
+## AEU: how close it is to the 53-tone system, and where it falls short
 
-AEU is built from pure fifths, the 53-grid from equal steps, so strictly they are two different systems. In practice the difference doesn't matter: every one of the 24 AEU pitches lies within 0.9 cents of a 53-grid line (the largest gap is Dik Bûselik, 0.88 cents). That is far below any JND, so I treat AEU as 24 of the 53 points from here on.
+AEU is built from pure fifths, the 53-tone system from equal steps, so strictly they are two different systems. In practice the difference doesn't matter: every AEU pitch lies within 0.9 cents of a 53-tone step (the largest gap is Dik Bûselik, 0.88 cents). That is far below anything the ear can detect, so AEU can be treated as 24 of the 53 points.
 
-Against the piano the picture is different. Apart from Rast itself, which is defined as Sol, no AEU pitch equals a 12-TET note. The white keys all have an AEU pitch within 8 cents. Three of the black keys, G♯, C♯ and F♯, fall between two AEU pitches about 10 to 14 cents away on either side; A♯ and D♯ have one AEU pitch 6 to 8 cents away.
+Between neighbouring AEU pitches there are only three step sizes: 1, 3 or 4 commas (about 23.5, 66.8 and 90.2 cents). And against the piano, apart from Rast itself, no AEU pitch equals a 12-TET note. Every white key has an AEU pitch within 8 cents. Three of the black keys, G♯, C♯ and F♯, fall between two AEU pitches about 10 to 14 cents away on either side; A♯ and D♯ each have one about 6 to 8 cents away.
 
-## Finding 2: practice uses 37 pitches, not 24
+AEU's weak points come from that fixed set of 24:
 
-To see what musicians actually play, I used **SymbTr** (Karaosmanoğlu 2012), a corpus of Turkish makam scores built for music information retrieval. The current GitHub version has 2,200 pieces in 155 makams, 849,403 notes in total. Every note has two values: its AEU spelling (*KomaAE*) and the pitch an expert says it is really played at, on the 53-grid (*Koma53*).
+- **Missing pitches.** The 15 practical pitches above have no symbol, so the score shows a nearby AEU note and the player is expected to know better.
+- **One symbol, several pitches.** Written Segâh sounds at comma 17 in Rast and at comma 16 in Uşşak. Hüzzam plays written Eviç one comma lower, and Saba plays written Hicaz one comma higher.
+- **Unused symbols.** Dik Hicaz and Dik Mâhur are part of the system but barely appear in real music.
 
-7.7% of all notes are performed off the AEU grid, and almost every one of those shifts is exactly one comma. I counted a position as *practical* when it is used in at least 10% of some makam's pieces (and in at least 3 pieces). That gives 37 positions: 22 of the 24 AEU pitches plus 15 that AEU can't write.
+## The 53 Holder koması system
 
-| Comma | Code | Written in AEU as | Most consistent makam (share of pieces) | Notes |
-|---|---|---|---|---|
-| 16 | B♭2 | Segâh (1 lower) | Tâhir, Gerdaniye 100%; Uşşak family | 29,080 |
-| 47 | F♯3 | Eviç (1 lower) | Tâhir, Gerdaniye 100% | 16,260 |
-| 37 | E♭3 | Hisar (1 higher) | Hüzzam 82% | 7,399 |
-| 28 | D♭3 | Hicaz (1 higher) | Bestenigâr 100%, Saba 89% | 4,979 |
-| 25 | C♯3 | Nim Hicaz (1 lower) | Nişâburek 96%, Yegâh 82% | 3,503 |
-| 38 | E♭2 | Dik Hisar (1 lower) | Kürdîlihicazkâr 43% | 1,776 |
-| 46 | F♯2 | Dik Acem (1 higher) | İsfahan 50% | 642 |
-| 43 | E♯3 | Acem (1 lower) | Yegâh 55% | 558 |
-| 3 | G♯3 | Nim Zirgüle (1 lower) | Nişâburek 88% | 440 |
-| 15 | B♭3 | Dik Kürdî (1 lower) | Muhayyerkürdî 22% | 315 |
-| 12 | A♯3 | Kürdî (1 lower) | Segâh 11% | 235 |
-| 7 | A♭2 | Dik Zirgüle (1 lower) | Kürdîlihicazkâr 14% | 109 |
-| 6 | A♭3 | Zirgüle (1 higher) | Kürdîlihicazkâr 11% | 64 |
-| 24 | C♯2 | Çârgâh (2 higher) | Sûzidil 21% | 41 |
-| 34 | D♯3 | Nim Hisar (1 lower) | Nişâburek 15% | 33 |
+The 53-tone system divides the octave into 53 equal steps of 1200/53 ≈ 22.64 cents. In Turkish theory this step is called the **Holder koması** (Holdrian comma), after the English theorist William Holder, who described it in the 17th century; the mathematician Nicholas Mercator had worked out the division before him. Its trick is that 31 of its steps make a fifth only 0.07 cents away from a pure 3/2, which is why it fits a fifth-based system like AEU so well.
 
-Going the other way, two AEU pitches are practically unused: Dik Hicaz (comma 30, 81 notes in the whole corpus) and Dik Mâhur (comma 52, only 3 notes). Three grid positions, 20, 32 and 33, never occur at all.
+This is where my first misunderstanding comes from. On this grid a whole tone is **9 commas**, so "the whole tone is divided into 9" is true for the grid. But AEU names only 4 of the 8 positions inside a whole tone (1, 4, 5 and 8 commas above the lower note), and in practice musicians use a few more of them. A Western semitone also isn't 4.5 commas: the two "semitones" of this system are 4 and 5 commas.
 
-The important point: **the gap is not a transposition artefact.** The *same written note* is played at different heights in different makams. Written Segâh is played at comma 17 in Rast (98% of those notes) and in Segâh makam (99%), but at comma 16, one comma lower, in Uşşak, Bayati, Hüseynî and Saba (about 88%). Hüzzam plays written Eviç one comma lower (86%), and Saba plays written Hicaz one comma higher (91%). The score is the same; the pitch depends on the makam, and on the tradition that tells you which one to play.
+## Makams: different flavours from different pitches
 
-This also lines up with an observation in the SymbTr paper: four of the five Turkish folk music (THM) pitches that AEU lacks, B♭2, F♯3, E♭2 and C♯3, are among the most used off-grid pitches in the art music corpus too.
+A *makam* is a melodic mode. It is a set of pitches plus rules about which notes to stress, how a melody travels through them and where it comes to rest. The final note is called the *durak*. Two makams can share most of their notes and still sound very different, because one or two pitches sit a comma higher or lower, or because the melody moves through them differently.
+
+The figure below shows a few makams side by side with C major. Rast and Çârgâh are the theory versions. The four lower rows come from the SymbTr data: every pitch that makes up at least 2.5% of that makam's notes, folded into one octave.
 
 <MakamScales>
-  C major and Çârgâh look alike, but Rast's third (Segâh) is about 15 cents below B and its seventh (Eviç) about 13 cents below F♯. The four SymbTr rows are derived from the data: every pitch that makes up at least 2.5% of the makam's notes, folded into one octave. The tooltip shows each pitch's share. Notice comma 16 (B♭2) in Uşşak, Hüseynî and Saba where Rast has 17.
+  C major and Çârgâh look alike, but Rast's third (Segâh) is about 15 cents below B and its seventh (Eviç) about 13 cents below F♯. Notice comma 16 (B♭2) in Uşşak, Hüseynî and Saba where Rast has 17. Hover over a note to see its share of the makam's notes.
 </MakamScales>
 
-## Finding 3: is one comma audible?
+Some recordings to hear these makams in real music:
 
-One comma is a fixed ratio, about 1.32% of the frequency (Δf = 0.013164 · f). The JND is not: in Hz it is roughly flat in the bass and grows with frequency. So the question is where the two lines cross.
+- **Rast:** [listen on YouTube](https://www.youtube.com/watch?v=-3SELujF6hk)
+- **Hüzzam:** [example 1](https://www.youtube.com/watch?v=TfajiDNfAKk), [example 2](https://www.youtube.com/watch?v=kvc0yyfshB4)
+- **Saba:** [listen on YouTube](https://www.youtube.com/watch?v=3m67_fpMI9s)
+- **Uşşak:** [listen on YouTube](https://www.youtube.com/watch?v=18bUi4iU5Tc)
 
-| Frequency | 1 comma | JND (slide 11) | JND (slide 12) | comma ÷ JND (11 / 12) |
-|---|---|---|---|---|
-| 100 Hz | 1.3 Hz | 49.5 cents | 9.2 cents | 0.5 / 2.5 |
-| 250 Hz | 3.3 Hz | 20.7 cents | 5.2 cents | 1.1 / 4.3 |
-| 500 Hz | 6.6 Hz | 12.8 cents | 3.9 cents | 1.8 / 5.9 |
-| 1 kHz | 13.2 Hz | 9.5 cents | 3.4 cents | 2.4 / 6.7 |
-| 2 kHz | 26.3 Hz | 8.6 cents | 3.7 cents | 2.6 / 6.1 |
-| 4 kHz | 52.7 Hz | 9.6 cents | 5.6 cents | 2.4 / 4.1 |
+## Turkish music next to other pitch systems
 
-<p class="note">Slide 11 is the JND curve from our course slides (read off the plot, approximate). Slide 12 is the more sensitive fit by Wier, Jesteadt and Green (1977): log₁₀(Δf) = 0.026·√f − 0.533.</p>
-
-Between 500 Hz and 4 kHz, one comma is about 2 to 7 times the JND, depending on which data you trust. That is comfortably audible, at least for a trained ear in a quiet room. In the bass the margin disappears: with the course-slide values, one comma reaches the JND at about 225 Hz and drops under it below that. That's G3 and everything under it, the whole range of a bass line. The Wier data are more forgiving, but even there the margin shrinks from about 6× to 2.5× at 100 Hz.
-
-And these are best-case numbers measured with steady tones. Short notes raise the threshold further, which matters a lot for fast bass lines (more on that in [my next post, about bass, note duration and pitch detection](/blog/low-pitch-duration)).
-
-<CommaVsJnd>
-  Our own chart of the values in the table above (not the textbook figure). The shaded strip is where one comma is smaller than the JND. The buttons play a note and then the same note one comma higher, so you can hear the difference get harder to catch as you go down.
-</CommaVsJnd>
-
-## How other cultures cut the octave
-
-Finally, I wanted to see Turkish practice next to other systems. The figure below shows only the *possible* notes of each system, not scales, all started from Sol = 392 Hz so they line up.
+Here are some other pitch systems of the world on the same ruler, all starting from Sol = 392 Hz. Only the possible notes of each system are shown, not scales.
 
 <WorldTunings>
   Slendro, pelog and Thai tunings are idealized or averaged; real instruments vary. Arabic and Persian theory has used 24 quarter tones since the 1932 Cairo Congress (and Vaziri), but practice uses neutral intervals that deviate from them. The Chinese chain of fifths doesn't close: Zhonglü ends up about 24 cents above a pure fourth. The śruti list is one common just-intonation version; sources differ.
 </WorldTunings>
 
-A few things jump out. The Chinese twelve *lü* and AEU are built the same way, by stacking pure fifths, so their shared pitches line up exactly (Dalü is Zirgüle, Taicu is Dügâh). The Indian *śruti* list contains steps of 81/80, about 21.5 cents, which is close to one Holdrian comma, so the two finest systems in the figure work at roughly the same resolution. And the Javanese gamelan tunings and the Thai scale don't sit on the Western grid at all: they are a different way of dividing the octave, not a slightly detuned version of ours.
+The biggest surprise for me was how close the **Indian** śruti list is to AEU. Both are built mostly from the same pure ratios: 13 of the 23 śruti pitches are exactly AEU pitches, and 9 more are within 2 cents of one. The **Chinese** twelve *lü* are built exactly like AEU, by stacking pure fifths, so their shared pitches line up exactly (Dalü is Zirgüle, Taicu is Dügâh).
 
-## Listen: Happy Birthday in two tunings
+**Arabic** and Turkish music are often described as close relatives, but on paper their pitch systems don't match well. The 24 quarter tones fall on AEU pitches only at a few points (Rast, Çârgâh, Nevâ and the octave). The characteristic in-between quarter tones, like 150 or 350 cents, are 25 to 44 cents away from any AEU pitch. Real Arabic practice uses neutral intervals that bend away from the quarter-tone grid, so the sounding difference is smaller than the theory suggests. The Javanese gamelan tunings and the Thai scale don't sit on the Western grid at all: they are a different way of dividing the octave, not a slightly detuned version of ours.
 
-Numbers are one thing; here is the same tune, *Happy Birthday* (public domain, from "Good Morning to All", 1893), played in 12-TET and in Rast. Only two notes really change: B becomes Segâh, about 15 cents lower, and F♯ becomes Eviç, about 13 cents lower. Play it at G4 first, then switch to the lower registers and listen to how the difference shrinks.
+## Happy Birthday in G major and in Rast
+
+How well can the Turkish system play a Western tune? Here is *Happy Birthday* (public domain, from "Good Morning to All", 1893) in G major, tuned in 12-TET, and in Rast, the makam usually compared with the major scale. In the Rast version every note comes from the 53 Holder koması grid, and only Rast itself (G) is shared with 12-TET.
+
+Two notes clearly change: B becomes Segâh, about 15 cents lower, and F♯ becomes Eviç, about 13 cents lower. The others (Dügâh, Çârgâh, Nevâ, Hüseynî) are only 2 to 6 cents away from their Western neighbours, so you may not hear any difference there. Play it at G4 first, then switch to the lower registers and listen to the difference shrink.
 
 <HappyBirthday />
 
-## Limitations
+## Can the ear even hear one comma?
 
-- SymbTr's 53-grid pitches are expert annotations of practice, not acoustic measurements, and they can't show differences smaller than one comma.
-- Nişâburek seems to be notated a whole tone higher in SymbTr (all its pieces end on Dügâh), so positions 3 and 25 may be transposition artefacts.
-- The 10% criterion is a choice. The JND values were read from slide images. Slendro, pelog and Thai tunings vary between instruments.
+My second misunderstanding was that these comma differences are too small to hear. The ear's pitch resolution is measured as the **just noticeable difference (JND)**, the smallest change we can detect, and it isn't fixed. One comma is always about 1.32% of the frequency; the JND in Hz is roughly flat in the bass and grows with frequency.
+
+Between 500 Hz and 4 kHz, one comma is about 2 to 7 times the JND, depending on the data set: clearly audible for an attentive ear. In the bass the margin disappears. With the values from my music perception course, one comma drops below the JND under about 225 Hz, which is G3 and the whole range of a bass line. The more sensitive data of Wier, Jesteadt and Green (1977) are more forgiving, but the margin still shrinks there. And these are best-case numbers with long, steady tones; short notes make it harder still (more on that in [my next post, about bass, note duration and pitch detection](/blog/low-pitch-duration)).
+
+<CommaVsJnd>
+  My own chart of the two JND data sets (not the textbook figure). The shaded strip is where one comma is smaller than the JND. The buttons play a note and then the same note one comma higher, so you can hear the difference get harder to catch as you go down.
+</CommaVsJnd>
 
 ## Sources
 
@@ -132,7 +127,7 @@ Numbers are one thing; here is the same tune, *Happy Birthday* (public domain, f
   <li>Karaosmanoğlu, M. K. (2012). A Turkish makam music symbolic database for music information retrieval: SymbTr. <em>Proceedings of ISMIR 2012</em>, pp. 223–228.</li>
   <li>SymbTr repository: <a href="https://github.com/MTG/SymbTr">github.com/MTG/SymbTr</a> (CC BY-NC-SA 4.0; this post only publishes statistics derived from it).</li>
   <li>Bozkurt, B., Yarman, O., Karaosmanoğlu, M. K., &amp; Akkoç, C. (2009). Weighing diverse theoretical models on Turkish maqam music against pitch measurements. <em>Journal of New Music Research</em>, 38(1).</li>
-  <li>Wier, C. C., Jesteadt, W., &amp; Green, D. M. (1977). Frequency discrimination as a function of frequency and sensation level. Data via our music perception course slides.</li>
+  <li>Wier, C. C., Jesteadt, W., &amp; Green, D. M. (1977). Frequency discrimination as a function of frequency and sensation level. Data via my music perception course slides.</li>
   <li><a href="https://en.wikipedia.org/wiki/Shruti_(music)">Shruti (music)</a>, Wikipedia.</li>
   <li>Gamelan pelog and slendro averages: <a href="https://preinfarction.blogspot.com/2025/03/gamelon-scales-pelog-and-slendro.html">preinfarction.blogspot.com</a>.</li>
 </ol>

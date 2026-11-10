@@ -543,17 +543,14 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
     color: var(--c-ink-2);
   }
 
-  /* not in AEU: a diamond with a white outline (shape, not colour, carries the meaning) */
+  /* not in AEU: a diamond (shape, not colour, carries the meaning) */
   .t-accent .mk-dot {
-    width: 9px;
-    height: 9px;
-    margin-left: -4.5px;
-    bottom: calc(5.5px + var(--nh));
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+    bottom: calc(5px + var(--nh));
     border-radius: 1px;
     transform: rotate(45deg);
-    box-shadow:
-      0 0 0 1px var(--c-surface),
-      0 0 0 2.5px var(--c-ink);
   }
   .mk.t-accent:hover .mk-dot,
   .mk.t-accent.is-active .mk-dot {
@@ -670,10 +667,7 @@ const pos = (c: number) => `--xl:${xLog(c).toFixed(5)};--xn:${xLin(c).toFixed(5)
     margin: 0 2px;
     border-radius: 1px;
     transform: rotate(45deg);
-    background: #8f8f8f;
-    box-shadow:
-      0 0 0 1.5px var(--c-surface),
-      0 0 0 3px var(--c-ink);
+    background: var(--c-ink-2);
   }
   .r-swatch-rows {
     width: 30px;

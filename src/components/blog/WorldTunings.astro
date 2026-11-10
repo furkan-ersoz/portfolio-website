@@ -80,17 +80,24 @@ const rows: RulerRow[] = [
     sub: 'SymbTr, 37 pitches',
     markers: PRACTICAL.map((pos) => {
       const a = aeuAt(pos);
-      return marker(commaToCents(pos), CODES[pos], a ? `${CODES[pos]} · ${a.name}` : `${CODES[pos]} · not in AEU`, `Comma ${pos}`);
+      const m = marker(commaToCents(pos), CODES[pos], a ? `${CODES[pos]} · ${a.name}` : `${CODES[pos]} · not in AEU`, `Comma ${pos}`);
+      return a ? m : { ...m, tone: 'accent' as const };
     }),
   },
   {
-    name: 'Turkish 53-grid',
-    sub: 'Holdrian commas',
+    name: '53 Holder koması',
+    sub: 'Turkish 53-tone system (53-TET)',
     markers: Array.from({ length: 54 }, (_, k) => marker(commaToCents(k), String(k), `Comma ${k} (${CODES[k]})`, `Step ${k} of 53 (22.64 cents each)`)),
   },
 ];
 ---
 
-<Ruler id="fig-world" title="Figure 4 · How musical cultures cut the octave (coarse at the bottom, fine at the top)" rows={rows} minWidth={1040} legend={[]}>
+<Ruler
+  id="fig-world"
+  title="Figure 3 · How musical cultures cut the octave (coarse at the bottom, fine at the top)"
+  rows={rows}
+  minWidth={1040}
+  legend={[{ tone: 'accent', label: 'Turkish practice: not in AEU' }]}
+>
   <slot />
 </Ruler>

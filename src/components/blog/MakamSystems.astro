@@ -68,15 +68,14 @@ const practice: RulerRow = {
 };
 
 const grid: RulerRow = {
-  name: '53-tone grid',
-  sub: '1 comma ≈ 22.64 cents',
+  name: '53 Holder koması',
+  sub: '53 equal steps, 1 comma ≈ 22.64 cents',
   markers: Array.from({ length: 54 }, (_, k) => {
     const c = commaToCents(k);
     const a = aeuAt(k);
     return {
       cents: c,
       label: String(k),
-      tone: a ? undefined : ('minor' as const),
       tip: [`Comma ${k} (${CODES[k]})`, where(c), a ? `AEU pitch: ${a.name}` : 'No AEU pitch here'],
     };
   }),
@@ -90,7 +89,6 @@ const grid: RulerRow = {
   minWidth={1040}
   legend={[
     { tone: 'accent', label: 'Used in practice, not in AEU' },
-    { tone: 'minor', label: '53-grid line without an AEU pitch' },
   ]}
 >
   <slot />
