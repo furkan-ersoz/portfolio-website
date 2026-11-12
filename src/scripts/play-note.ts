@@ -51,7 +51,62 @@ function volumeLevel(): number {
 
 export const isMuted = () => volumeLevel() === 0;
 
+// ── iPhone / iPad: play even when the silent switch is on ──
+// iOS treats Web Audio as "ambient" sound, which the ring/silent switch mutes (also inside
+// in-app browsers like LinkedIn's). Media playback is not muted, so we ask for that:
+//   1. Safari 16.4+: navigator.audioSession.type = 'playback'
+//   2. older iOS: start a silent, looping <audio> element inside the tap, which switches
+//      the page's audio session to playback for as long as it runs.
+let iosUnlocked = false;
+function unlockIOSAudio() {
+  if (iosUnlocked) return;
+  iosUnlocked = true;
+  const nav = navigator as Navigator & { audioSession?: { type: string } };
+  try {
+    if (nav.audioSession) nav.audioSession.type = 'playback';
+  } catch {
+    // not supported: the fallback below still runs
+  }
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!isIOS) return;
+  try {
+    const el = document.createElement('audio');
+    el.setAttribute('x-webkit-airplay', 'deny');
+    el.preload = 'auto';
+    el.loop = true;
+    el.src = silentWavUrl();
+    el.volume = 0;
+    void el.play().catch(() => {});
+  } catch {
+    // ignore: worst case the silent switch still mutes the notes
+  }
+}
+
+/** A 0.5 s silent mono WAV as a blob URL. */
+function silentWavUrl(): string {
+  const rate = 8000;
+  const samples = rate / 2;
+  const buf = new ArrayBuffer(44 + samples * 2);
+  const v = new DataView(buf);
+  const str = (o: number, s: string) => [...s].forEach((ch, i) => v.setUint8(o + i, ch.charCodeAt(0)));
+  str(0, 'RIFF');
+  v.setUint32(4, 36 + samples * 2, true);
+  str(8, 'WAVE');
+  str(12, 'fmt ');
+  v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true); // PCM
+  v.setUint16(22, 1, true); // mono
+  v.setUint32(24, rate, true);
+  v.setUint32(28, rate * 2, true);
+  v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true);
+  str(36, 'data');
+  v.setUint32(40, samples * 2, true);
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+}
+
 function getOutput(): { ctx: AudioContext; out: GainNode } | null {
+  unlockIOSAudio(); // must run inside the tap, like creating the AudioContext
   if (!ctx) {
     const AC = window.AudioContext ?? (window as any).webkitAudioContext;
     if (!AC) return null;
