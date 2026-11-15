@@ -31,6 +31,7 @@ export const socials = [
   { label: 'GitHub', icon: 'github', url: 'https://github.com/furkan-ersoz' },
   { label: 'Instagram', icon: 'instagram', url: 'https://www.instagram.com/furkan.ersoz/' },
   { label: 'YouTube', icon: 'youtube', url: 'https://www.youtube.com/@furkan_ersoz' },
+  { label: 'TikTok', icon: 'tiktok', url: 'https://www.tiktok.com/@furkan.ersoz_' },
   { label: 'Spotify', icon: 'spotify', url: 'TODO' }, // TODO: add when the artist profile exists
 ] as const;
 
